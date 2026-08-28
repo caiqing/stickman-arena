@@ -68,6 +68,15 @@
     return game.autoPilot;
   };
 
+  // ---------- 静音切换（M 键 / 系统按钮条共用） ----------
+  game.toggleMute = function () {
+    var v = SG.Audio.getVolumes();
+    if (v.master > 0) { game._lastMaster = v.master; SG.Audio.setVolumes({ master: 0 }); }
+    else { SG.Audio.setVolumes({ master: game._lastMaster || 0.8 }); }
+    game.saveSettings();
+    return SG.Audio.getVolumes().master === 0;
+  };
+
   // 初始化默认档案
   if (!game.profile) {
     game.profile = { name: '大侠', storyCustom: SG.DATA.defaultCustom() };
@@ -581,6 +590,18 @@
       else if (game.state === 'casual' && game.casual) touchMode = game.casual.constructor.name.toLowerCase();
       SG.Touch.sync(touchMode);
     }
+    // 系统按钮条：静音常驻；暂停/托管仅游戏中显示；触屏虚拟按键可见时隐藏以免重复
+    if (game.sysbar) {
+      var inGame = game.state === 'battle' || game.state === 'casual' || game.state === 'replay';
+      game.sysPause.classList.toggle('hiddenbtn', !inGame);
+      game.sysAuto.classList.toggle('hiddenbtn', !(game.state === 'battle' || game.state === 'casual'));
+      var padVis = SG.Touch && SG.Touch.isVisible();
+      game.sysbar.style.display = padVis ? 'none' : 'flex';
+      if (game.sysMute) {
+        game.sysMute.textContent = SG.Audio.getVolumes().master > 0 ? '🔊' : '🔇';
+        game.sysMute.title = SG.Audio.getVolumes().master > 0 ? '静音 (M)' : '取消静音 (M)';
+      }
+    }
 
     if (!game.paused) {
       acc += el;
@@ -854,6 +875,24 @@
     if (SG.Touch) SG.Touch.init();
     SG.UI.show('title');
 
+    // 系统按钮条：静音 / 暂停 / 托管（图形化功能键，鼠标与触屏都可点）
+    var sysbar = doc.createElement('div');
+    sysbar.id = 'sysbar';
+    function sysbtn(label, title, cb) {
+      var b = doc.createElement('button');
+      b.className = 'sysbtn';
+      b.textContent = label;
+      b.title = title;
+      b.addEventListener('click', function () { SG.Audio.unlock(); cb(); });
+      sysbar.appendChild(b);
+      return b;
+    }
+    game.sysMute = sysbtn('🔊', '静音 (M)', function () { game.toggleMute(); });
+    game.sysPause = sysbtn('⏸', '暂停 (P/Esc)', function () { game.togglePause(); });
+    game.sysAuto = sysbtn('🤖', 'AI 托管 (G)', function () { game.toggleAutoPilot(); });
+    game.sysbar = sysbar;
+    doc.getElementById('stage-wrap').appendChild(sysbar);
+
     global.addEventListener('error', function (e) {
       showErr('脚本错误: ' + e.message + ' @ ' + (e.filename || '?').split('/').pop() + ':' + e.lineno);
     });
@@ -890,10 +929,7 @@
         SG.Audio.unlock();
       }
       if (e.code === 'KeyM') {
-        var v = SG.Audio.getVolumes();
-        var muted = v.master > 0;
-        SG.Audio.setVolumes({ master: muted ? 0 : 0.8 });
-        game.saveSettings();
+        game.toggleMute();
       }
       if (e.code === 'KeyP' || e.code === 'Escape') {
         if (game.state === 'battle' || game.state === 'casual' || game.state === 'replay') togglePause();

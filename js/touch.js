@@ -10,6 +10,7 @@
   var rendered = null;   // 已渲染的布局标识
   var visible = false;   // 当前是否显示
   var autoBtnEl = null;  // 托管状态按钮（每帧同步高亮）
+  var muteBtnEl = null;  // 静音按钮（同步图标）
 
   function isTouchDevice() {
     return ('ontouchstart' in global) || (global.navigator && global.navigator.maxTouchPoints > 0);
@@ -31,7 +32,8 @@
     function down(e) {
       e.preventDefault();
       el.classList.add('active');
-      // 特殊动作键：暂停 / 托管开关
+      // 特殊动作键：静音 / 暂停 / 托管开关
+      if (key === '__mute') { if (SG.game) SG.game.toggleMute(); return; }
       if (key === '__pause') { if (SG.game) SG.game.togglePause(); return; }
       if (key === '__auto') { if (SG.game) SG.game.toggleAutoPilot(); return; }
       press(key, true);
@@ -60,9 +62,11 @@
     return d;
   }
 
-  // 顶部常驻：暂停 + AI 托管开关（触屏无键盘时的入口）
+  // 顶部常驻：静音 / 暂停 / AI 托管开关（触屏无键盘时的入口）
   function buildTop(root) {
     var top = div('vtop');
+    muteBtnEl = btn('🔊', '__mute', 'vsys');
+    top.appendChild(muteBtnEl);
     top.appendChild(btn('⏸', '__pause', 'vsys'));
     autoBtnEl = btn('🤖', '__auto', 'vsys vauto');
     top.appendChild(autoBtnEl);
@@ -132,6 +136,7 @@
     if (rendered === sig) return;
     rendered = sig;
     autoBtnEl = null;
+    muteBtnEl = null;
     container.innerHTML = '';
     container.style.display = want ? 'block' : 'none';
     if (want) BUILDERS[want](container);
@@ -152,13 +157,17 @@
       if (mode !== m || rendered === null) { mode = m; rendered = null; }
       visible = shouldShow();
       render();
-      // 托管按钮实时高亮
+      // 托管按钮实时高亮 / 静音图标同步
       if (autoBtnEl) autoBtnEl.classList.toggle('active', !!(SG.game && SG.game.autoPilot));
+      if (muteBtnEl && SG.Audio) {
+        muteBtnEl.textContent = SG.Audio.getVolumes().master > 0 ? '🔊' : '🔇';
+      }
     },
     input: function () {
       return visible ? Object.assign({}, flags) : {};
     },
     isTouchDevice: isTouchDevice,
+    isVisible: function () { return visible; },
     refresh: function () { visible = shouldShow(); rendered = null; render(); }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

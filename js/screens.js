@@ -553,7 +553,7 @@
       panel.appendChild(el('h2', 'title', '🏆 武林大会 · 家庭争霸赛'));
       panel.appendChild(el('div', 'tiny', '2-8名家人各自选择角色（爷爷奶奶外公外婆叔叔阿姨哥哥姐姐弟弟妹妹都在列），捉对厮杀，胜者晋级，决出总冠军"格斗界武林盟主"！'));
 
-      var list = el('div');
+      var list = el('div', 'plist');
       g.tournament.players.forEach(function (p, i) {
         var row = el('div', 'pslot');
         var cv = el('canvas'); cv.width = 64; cv.height = 84;
@@ -718,7 +718,7 @@
       s.innerHTML = '';
       var panel = el('div', 'panel');
       panel.appendChild(el('h2', 'title', '🏅 武林评分榜'));
-      var list = SG.Board.top(20);
+      var list = SG.Board.top(12);
       if (!list.length) {
         panel.appendChild(el('div', 'muted-note', '暂无记录——去打一场吧！'));
       } else {

@@ -45,6 +45,7 @@ body {
   max-width: 1040px;
   width: min(96vw, 1040px);
   max-height: 92vh;
+  max-height: calc(100dvh - 12px);
   overflow: auto;
 }
 
@@ -344,6 +345,83 @@ body { overscroll-behavior: none; }
   .bracket { flex-direction: column; gap: 12px; }
   .dlg-stage { height: 220px; }
 }
+
+.plist { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 720px) { .plist { grid-template-columns: 1fr; } }
+
+/* ---- 响应式：矮屏压缩，避免页面滚动 ---- */
+@media (max-height: 850px) {
+  .panel { padding: 16px 22px; }
+  h1.logo { font-size: 44px; letter-spacing: 5px; }
+  .subtitle { font-size: 13px; margin-bottom: 14px; letter-spacing: 3px; }
+  h2.title { font-size: 20px; margin-bottom: 10px; }
+  h3.sect { font-size: 14px; margin: 8px 0 6px; }
+  .btn { font-size: 15px; padding: 8px 16px; }
+  .btn.small { font-size: 13px; padding: 6px 10px; }
+  .menu-list { gap: 8px; min-width: 340px; }
+  .preview-box { padding: 8px; }
+  .preview-box canvas { width: 190px; height: 250px; }
+  .opt-row { margin-bottom: 6px; }
+  .opt-label { font-size: 13px; }
+  .opt-value { font-size: 14px; padding: 4px 6px; }
+  .opt-btn { width: 30px; height: 30px; }
+  .opt-hint { font-size: 11px; min-height: 14px; }
+  .story-node { padding: 8px 14px; gap: 10px; }
+  .story-node .num { width: 34px; height: 34px; font-size: 16px; }
+  .story-node .info .nm { font-size: 15px; }
+  .story-node .info .desc { font-size: 12px; }
+  .pslot { padding: 6px 10px; margin-bottom: 6px; }
+  .pslot canvas { width: 46px; height: 58px; }
+  .pslot .pinfo .pname { font-size: 14px; }
+  .replay-item { padding: 8px 12px; margin-bottom: 6px; }
+  table.lb th, table.lb td { padding: 5px 8px; font-size: 13px; }
+  .casual-card { padding: 12px; }
+  .casual-card .icon { font-size: 32px; }
+  .dlg-stage { height: 220px; }
+  .dlg-line { font-size: 15px; }
+  .result-title { font-size: 26px; }
+  .grade { font-size: 52px; }
+  .btn-row { margin-top: 10px; gap: 8px; }
+  .reward-item { padding: 6px 12px; margin-bottom: 5px; font-size: 13px; }
+  .stat-line { padding: 4px 2px; font-size: 13px; }
+  .match-card .mrow { padding: 6px 10px; font-size: 14px; }
+}
+@media (max-height: 700px) {
+  .panel { padding: 10px 16px; }
+  h1.logo { font-size: 34px; }
+  .story-node .info .desc, .pslot .pinfo .pcustom { display: none; }
+  .dlg-stage { height: 170px; }
+  .preview-box canvas { width: 150px; height: 200px; }
+  .casual-card .desc { display: none; }
+  .ctl-tbl td { padding: 3px 6px; font-size: 12px; }
+  .help-cols .tiny { font-size: 11px !important; line-height: 1.5 !important; }
+  .help-cols { max-height: 52vh; overflow-y: auto; }   /* 超矮屏帮助正文内部滚动 */
+}
+/* 手机横屏：列表双列化，进一步压缩 */
+@media (max-height: 500px) {
+  .panel { padding: 8px 12px; }
+  .screen { padding: 6px; }
+  .menu-list { gap: 6px; }
+  .story-map { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .plist { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .replay-item .rmeta { display: none; }
+}
+
+/* ---- 系统按钮条：静音 / 暂停 / 托管（图形化功能键） ---- */
+#sysbar {
+  position: fixed; right: 12px; bottom: 12px; z-index: 30;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.sysbtn {
+  width: 46px; height: 46px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .4);
+  background: rgba(20, 24, 44, .7); color: #fff; font-size: 20px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  user-select: none; -webkit-user-select: none; touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent; padding: 0;
+}
+.sysbtn:hover { border-color: #ffd97a; }
+.sysbtn.hiddenbtn { display: none; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: #333a5c; border-radius: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

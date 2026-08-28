@@ -3,10 +3,13 @@
 一个纯前端（HTML5 Canvas + 原生 JavaScript，零依赖、零外部素材）的火柴人格斗游戏。
 音效与背景音乐全部由 WebAudio 实时合成，双击即玩，可离线运行。
 
+> 🎮 **在线试玩**：<https://caiqing.github.io/stickman-arena/> —— 家人扫码/点链接即开即玩，无需安装
+
 ## 如何开始
 
-- **方式一**：直接双击 `index.html` 用浏览器打开即可。
-- **方式二**（推荐，本地服务器）：在本目录执行 `python3 -m http.server 8123`，然后访问 <http://localhost:8123/>。
+- **方式一（推荐）**：直接访问在线版 <https://caiqing.github.io/stickman-arena/>
+- **方式二**：直接双击 `index.html` 用浏览器打开即可。
+- **方式三**（本地服务器）：在本目录执行 `python3 -m http.server 8123`，然后访问 <http://localhost:8123/>。
 
 > 首次进入后点击任意按钮以开启声音（浏览器自动播放策略）。`M` 键随时静音。
 

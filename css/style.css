@@ -258,6 +258,7 @@ input[type=range] { accent-color: #f5b942; width: 200px; }
 
 /* ---- 标题界面：面板半透明，露出两侧演武的火柴人 ---- */
 #screen-title .panel.title-panel {
+  width: min(600px, 74vw);          /* 收窄遮罩框，两侧留给火柴人演武 */
   background: rgba(14, 18, 36, 0.55);
   border: 1px solid rgba(96, 108, 170, 0.3);
   box-shadow: none;

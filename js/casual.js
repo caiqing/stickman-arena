@@ -9,6 +9,17 @@
     for (var k in inp) e[k] = inp[k] && !prev[k];
     return e;
   }
+  // 休闲模式不佩戴武器：统一收起，换成拳头
+  function noWeapon(custom) { return Object.assign({}, custom, { weapon: 'fist' }); }
+  // 计算划船姿势的前手坐标（与 stickman.js 前臂运动学一致，用于把桨锚在手上）
+  function rowHand(pose) {
+    var pelvis = [0, -70 + (pose.crouch || 0)];
+    var neck = [pelvis[0] + Math.sin(pose.lean) * 50, pelvis[1] - Math.cos(pose.lean) * 50];
+    var sh = [neck[0] + 4, neck[1] + 2];
+    var elb = [sh[0] + Math.sin(pose.armF[0]) * 28, sh[1] + Math.cos(pose.armF[0]) * 28];
+    var a = pose.armF[0] + pose.armF[1];
+    return [elb[0] + Math.sin(a) * 26, elb[1] + Math.cos(a) * 26];
+  }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function fmtTime(s) {
     var m = Math.floor(s / 60), r = Math.floor(s % 60);
@@ -219,7 +230,7 @@
     var bob = this.stumble > 0 ? 0 : Math.abs(Math.sin(beatIdx * Math.PI)) * 0;
     SG.Stick.draw(ctx, {
       x: W / 2, y: 640 + bob, facing: 1, params: pose, t: this.time,
-      custom: this.custom, vx: 0, glow: 0.3,
+      custom: noWeapon(this.custom), vx: 0, glow: 0.3,
       eye: this.stumble > 0 ? 'ko' : 'normal'
     });
 
@@ -412,15 +423,14 @@
       ctx.fillText('¥', x, c.y + bob + 6);
     });
 
-    // 船 + 划船火柴人
+    // 船 + 划船火柴人（人船合一：坐在舱内）
     var boatX = W / 2, boatY = this.boatY + Math.sin(this.bobT * 2.4) * 6;
     var tilt = Math.sin(this.bobT * 2.4 + 1) * 0.05;
-    if (this.invuln > 0 && Math.floor(this.invuln * 10) % 2 === 0) { /* 受击闪烁 */ }
     ctx.save();
     ctx.translate(boatX, boatY);
     ctx.rotate(tilt);
     if (this.invuln > 0 && Math.floor(this.invuln * 12) % 2 === 0) ctx.globalAlpha = 0.4;
-    // 船体
+    // 船体（远舷 + 舱内）
     ctx.fillStyle = '#8a5a30';
     ctx.beginPath();
     ctx.moveTo(-95, -18); ctx.lineTo(95, -18);
@@ -428,23 +438,34 @@
     ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#6a421e';
     ctx.fillRect(-95, -18, 190, 8);
-    // 人
-    var rowPose = this.strokeAnim > 0
-      ? (this.rowPhase > 0 ? 'rowB' : 'rowA')
-      : (this.rowPhase > 0 ? 'rowB' : 'rowA');
+    // 人（盆骨落在船舷高度，坐进舱里）
+    var rowPose = this.rowPhase > 0 ? 'rowB' : 'rowA';
     var pose = SG.Stick.getPose(rowPose, this.bobT);
-    SG.Stick.draw(ctx, { x: 0, y: -24, facing: 1, params: pose, t: this.bobT, custom: this.custom });
-    // 桨
-    var oarAng = this.strokeAnim > 0
-      ? (this.strokeAnim > 0.18 ? 0.9 : 0.2)
-      : 0.55;
-    ctx.save();
-    ctx.translate(24, -38);
-    ctx.rotate(oarAng);
+    SG.Stick.draw(ctx, { x: 2, y: 54, facing: 1, params: pose, t: this.bobT, custom: noWeapon(this.custom) });
+    // 近舷船板（盖住小腿，形成坐进船里的层次）
+    ctx.fillStyle = '#9a6838';
+    ctx.beginPath();
+    ctx.moveTo(-97, -4); ctx.lineTo(97, -4);
+    ctx.lineTo(80, 26); ctx.lineTo(-80, 26);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#7a4e26';
+    ctx.fillRect(-97, -6, 194, 5);
+    // 桨（握在前手中，随划桨节奏摆动：前伸入水 ↔ 后拉出水）
+    var grip = rowHand(pose);
+    var gx = 2 + grip[0], gy = 54 + grip[1];
+    var prog = this.strokeAnim > 0 ? 1 - this.strokeAnim / 0.35 : 1;
+    var oarAng = this.rowPhase > 0 ? 0.75 + prog * 0.5 : 1.25 - prog * 0.5;
+    var dx = Math.cos(oarAng), dy = Math.sin(oarAng);
     ctx.strokeStyle = '#7a5230'; ctx.lineWidth = 6; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(80, 30); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(gx - dx * 22, gy - dy * 22);
+    ctx.lineTo(gx + dx * 95, gy + dy * 95);
+    ctx.stroke();
+    ctx.save();
+    ctx.translate(gx + dx * 95, gy + dy * 95);
+    ctx.rotate(oarAng);
     ctx.fillStyle = '#8a6238';
-    ctx.beginPath(); ctx.ellipse(86, 34, 10, 16, 0.5, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(4, 0, 16, 8, 0, 0, 7); ctx.fill();
     ctx.restore();
     ctx.restore();
     // 船尾浪花
@@ -511,8 +532,8 @@
     this.vy += (thrust ? -1500 : 1100) * dt;
     this.vy = clamp(this.vy, -420, 460);
     this.y += this.vy * dt;
-    this.y = clamp(this.y, 120, 585);
-    if (this.y >= 585 || this.y <= 120) this.vy *= 0.2;
+    this.y = clamp(this.y, 235, 585);   // 顶部给伞翼留出空间
+    if (this.y >= 585 || this.y <= 235) this.vy *= 0.2;
 
     this.speed = Math.min(560, this.speed + dt * 6);
     this.scrollX += this.speed * dt;
@@ -614,23 +635,55 @@
       }
     });
 
-    // 飞行火柴人
+    // 飞行火柴人 + 滑翔伞（人伞合一，伞随人一起倾斜）
     var pose = SG.Stick.getPose('fly', this.t);
-    var tilt = clamp(this.vy / 600, -0.5, 0.5);
+    var tilt = clamp(this.vy / 900, -0.3, 0.3);
+    var bodyHex = SG.DATA.colorById(this.custom.color).hex;
+    var lean = clamp(-this.vy * 0.05, -18, 18);   // 上升时伞向前倾
+    var cx = this.x + lean, cy = this.y - 190;
+    var glideCustom = noWeapon(this.custom);  // 滑翔时收起武器
     ctx.save();
     if (this.invuln > 0 && Math.floor(this.invuln * 12) % 2 === 0) ctx.globalAlpha = 0.4;
-    // 尾焰
-    if (this.vy < -80) {
-      var fl = ctx.createRadialGradient(this.x, this.y + 44, 2, this.x, this.y + 44, 26);
-      fl.addColorStop(0, 'rgba(255,200,80,0.9)');
-      fl.addColorStop(1, 'rgba(255,120,40,0)');
-      ctx.fillStyle = fl;
-      ctx.beginPath(); ctx.arc(this.x, this.y + 44, 26, 0, 7); ctx.fill();
-    }
     ctx.translate(this.x, this.y);
     ctx.rotate(tilt);
     ctx.translate(-this.x, -this.y);
-    SG.Stick.draw(ctx, { x: this.x, y: this.y, facing: 1, params: pose, t: this.t, custom: this.custom });
+    // 伞绳（连到双手）
+    ctx.strokeStyle = 'rgba(70,70,84,0.9)'; ctx.lineWidth = 2;
+    [[-72, -8], [-26, -2], [26, -2], [72, -8]].forEach(function (p) {
+      ctx.beginPath();
+      ctx.moveTo(cx + p[0], cy + p[1]);
+      ctx.lineTo(this.x + p[0] * 0.08, this.y - 168);
+      ctx.stroke();
+    }, this);
+    // 伞翼（条纹滑翔伞）
+    var canopyPath = function () {
+      ctx.beginPath();
+      ctx.moveTo(cx - 92, cy + 4);
+      ctx.quadraticCurveTo(cx, cy - 46, cx + 92, cy + 4);
+      ctx.quadraticCurveTo(cx, cy - 16, cx - 92, cy + 4);
+      ctx.closePath();
+    };
+    canopyPath();
+    ctx.fillStyle = bodyHex; ctx.fill();
+    ctx.save();
+    canopyPath(); ctx.clip();
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    for (var s = -2; s <= 2; s += 2) ctx.fillRect(cx + s * 38 - 14, cy - 50, 28, 60);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 2;
+    canopyPath(); ctx.stroke();
+    // 上升时的风痕
+    if (this.vy < -60) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      for (var w = 0; w < 3; w++) {
+        var wy = this.y - 40 + w * 30;
+        ctx.beginPath();
+        ctx.moveTo(this.x - 34 - w * 9, wy);
+        ctx.lineTo(this.x - 60 - w * 12, wy);
+        ctx.stroke();
+      }
+    }
+    SG.Stick.draw(ctx, { x: this.x, y: this.y, facing: 1, params: pose, t: this.t, custom: glideCustom });
     ctx.restore();
 
     // HUD
@@ -647,7 +700,7 @@
     ctx.fillText(hs, W - 40, 54);
     ctx.font = '16px system-ui';
     ctx.fillStyle = '#3a6a9a';
-    ctx.fillText('按住 ↑/W 喷气上升，松开下滑', W - 40, 88);
+    ctx.fillText('按住 ↑/W 操伞上升，松开滑翔', W - 40, 88);
     ctx.textAlign = 'left';
   };
 

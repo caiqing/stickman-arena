@@ -482,21 +482,22 @@
       });
       cpuBtn.textContent = g.versus.p2cpu ? '🤖 电脑操控' : '🙋 真人操控';
       cpuRow.appendChild(cpuBtn);
-      var diffSel = doc.createElement('select');
-      diffSel.className = 'txt';
-      diffSel.style.width = 'auto';
-      ['简单', '普通', '困难'].forEach(function (d, i) {
-        var o = doc.createElement('option');
-        o.value = i; o.textContent = d;
-        diffSel.appendChild(o);
-      });
-      diffSel.value = g.versus.difficulty;
-      diffSel.addEventListener('change', function () { g.versus.difficulty = +diffSel.value; });
       var dwrap = el('div', 'opt-label');
       dwrap.style.width = 'auto';
       dwrap.textContent = '电脑难度';
       cpuRow.appendChild(dwrap);
-      cpuRow.appendChild(diffSel);
+      // 用按钮组代替原生 select（原生下拉在部分内核里弹窗错位/过大）
+      var diffBtns = [];
+      ['简单', '普通', '困难'].forEach(function (d, i) {
+        var b = btn(d, function () {
+          g.versus.difficulty = i;
+          diffBtns.forEach(function (x, j) { x.classList.toggle('primary', j === i); });
+          SG.Audio.sfx('click');
+        }, 'small');
+        if (g.versus.difficulty === i) b.classList.add('primary');
+        diffBtns.push(b);
+        cpuRow.appendChild(b);
+      });
       panel.appendChild(cpuRow);
       panel.appendChild(el('div', 'tiny', 'P1：A/D移动 W跳 S格挡 J拳 K腿 I冲刺 L蓄力 U大招 ｜ P2：方向键 + 数字键盘1拳2腿3冲刺0蓄力回车大招（无小键盘可用 , . / ; \' ）'));
 
@@ -516,7 +517,7 @@
       var g = SG.game;
       var panel = el('div', 'panel');
       panel.appendChild(el('h2', 'title', '🏆 武林大会 · 家庭争霸赛'));
-      panel.appendChild(el('div', 'tiny', '2-4名家人各自选择角色，捉对厮杀，胜者晋级，决出总冠军"格斗界武林盟主"！'));
+      panel.appendChild(el('div', 'tiny', '2-8名家人各自选择角色（爷爷奶奶外公外婆叔叔阿姨哥哥姐姐弟弟妹妹都在列），捉对厮杀，胜者晋级，决出总冠军"格斗界武林盟主"！'));
 
       var list = el('div');
       g.tournament.players.forEach(function (p, i) {
@@ -556,7 +557,7 @@
 
       var cntRow = el('div', 'opt-row');
       cntRow.appendChild(el('div', 'opt-label', '参赛人数'));
-      [2, 3, 4].forEach(function (n) {
+      [2, 3, 4, 5, 6, 7, 8].forEach(function (n) {
         var b = btn(n + ' 人', function () { g.setTournamentSize(n); UI.refresh_tournamentSetup(); UI.show('tournamentSetup'); }, 'small');
         if (g.tournament.players.length === n) b.classList.add('primary');
         cntRow.appendChild(b);
@@ -583,27 +584,33 @@
       var bk = el('div', 'bracket');
 
       function matchCard(m, label) {
-        m = m || [null, null];
-        var card = el('div', 'match-card' + (m === g.currentMatch() && !m.done ? ' now' : ''));
+        var card = el('div', 'match-card' + (m === g.currentMatch() ? ' now' : ''));
         card.appendChild(el('div', 'vs-badge', label));
-        [0, 1].forEach(function (i) {
-          var p = m[i];
+        [m.a, m.b].forEach(function (p, i) {
           var row = el('div', 'mrow');
-          if (!p) { row.innerHTML = '<span style="color:#666">待定</span>'; }
-          else {
+          if (!p) {
+            row.appendChild(el('span', 'tiny', (m.done && m.bye && i === 1) ? '（轮空）' : '待定'));
+          } else {
             row.appendChild(el('span', '', p.name + (p.cpu ? ' 🤖' : '')));
             if (m.done) row.classList.add(m.winnerIdx === i ? 'win' : 'lose');
           }
           card.appendChild(row);
         });
-        if (m.done) card.appendChild(el('div', 'tiny', '胜者：' + m[m.winnerIdx].name));
+        if (m.done && m.winnerIdx >= 0) {
+          var w = m.winnerIdx === 0 ? m.a : m.b;
+          if (w) card.appendChild(el('div', 'tiny', '胜者：' + w.name));
+        }
         return card;
       }
 
-      var col1 = el('div', 'bracket-col');
-      t.semis.forEach(function (m, i) { col1.appendChild(matchCard(m, '半决赛 ' + (i + 1))); });
-      var col2 = el('div', 'bracket-col');
-      col2.appendChild(matchCard(t.final, '决赛'));
+      var R = t.rounds.length;
+      for (var r = 0; r < R; r++) {
+        var col = el('div', 'bracket-col');
+        var remain = R - r;
+        var colLabel = remain === 1 ? '决赛' : remain === 2 ? '半决赛' : remain === 3 ? '1/4 决赛' : '第 ' + (r + 1) + ' 轮';
+        t.rounds[r].forEach(function (m) { col.appendChild(matchCard(m, colLabel)); });
+        bk.appendChild(col);
+      }
       var champCard = el('div', 'match-card');
       champCard.style.textAlign = 'center';
       champCard.style.padding = '20px';
@@ -615,14 +622,13 @@
         champCard.appendChild(el('div', 'tiny', '冠军？'));
         champCard.appendChild(el('div', '', '🏆'));
       }
-      col2.appendChild(champCard);
-      bk.appendChild(col1); bk.appendChild(col2);
+      bk.appendChild(champCard);
       panel.appendChild(bk);
 
       var br = el('div', 'btn-row');
       var next = g.currentMatch();
       if (next && !t.champion) {
-        br.appendChild(btn('▶ 进行：' + next[0].name + ' vs ' + next[1].name,
+        br.appendChild(btn('▶ 进行：' + next.a.name + ' vs ' + next.b.name,
           function () { g.startTournamentMatch(); }, 'primary'));
       }
       br.appendChild(btn('返回主菜单', function () { g.quitTournament(); }));
@@ -642,8 +648,8 @@
       var grid = el('div', 'grid cols3');
       var cards = [
         { type: 'dance', icon: '💃', nm: '节奏跳舞', desc: '随着音乐翩翩起舞，方向键踩点，追求全 PERFECT！三首舞曲任选。' },
-        { type: 'boat', icon: '🚣', nm: '激流划船', desc: '交替按键划桨，绕开礁石漩涡，收集金币，冲刺600米终点！' },
-        { type: 'fly', icon: '🦅', nm: '滑翔飞行', desc: '按住上升键喷气飞翔，收集星星，小心气球和小鸟！' }
+        { type: 'boat', icon: '🚣', nm: '激流划船', desc: '交替按键划桨，↑/↓ 三水道变道，绕开礁石漩涡，收集金币冲向600米终点！' },
+        { type: 'fly', icon: '🪂', nm: '滑翔飞行', desc: '人伞合一！按住上升键操控滑翔伞，收集星星，小心气球和小鸟！' }
       ];
       cards.forEach(function (c) {
         var card = el('div', 'casual-card');

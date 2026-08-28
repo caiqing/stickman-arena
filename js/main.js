@@ -30,7 +30,7 @@
     settings: loadJSON('sga_settings', null),
 
     versus: { p1: makeVersusSlot('玩家1'), p2: makeVersusSlot('玩家2'), p2cpu: false, difficulty: 1 },
-    tournament: { players: [], semis: [], final: null, champion: null, third: [], curIdx: 0 },
+    tournament: { players: [], rounds: [], champion: null, third: [], curIdx: 0 },
     casual: null,
     battle: null,
     battleMeta: null,
@@ -238,6 +238,7 @@
   };
 
   game.setTournamentSize = function (n) {
+    n = Math.max(2, Math.min(8, n));
     var old = game.tournament.players;
     var players = [];
     for (var i = 0; i < n; i++) {
@@ -247,42 +248,74 @@
         players.push({ name: preset.name, custom: cloneCustom(preset.custom), cpu: false });
       }
     }
-    game.tournament = { players: players, semis: [], final: null, champion: null, third: [], curIdx: 0 };
+    game.tournament = { players: players, rounds: [], champion: null, third: [], curIdx: 0 };
   };
 
   game.beginTournament = function () {
     var t = game.tournament;
     t.champion = null; t.third = []; t.curIdx = 0;
     var ps = t.players;
-    if (ps.length === 2) {
-      t.semis = [];
-      t.final = [ps[0], ps[1]];
-    } else {
-      var four = ps.slice();
-      if (four.length === 3) {
-        four.push({ name: '扫地僧', cpu: true, custom: Object.assign(SG.DATA.defaultCustom(), { color: 'brown', hair: 'long', hat: 'straw', clothes: 'cape', weapon: 'fist' }) });
+    var n = ps.length;
+    var size = 2;
+    while (size < n) size *= 2;   // 补齐到 2 的幂
+    // 标准种子位顺序：轮空分散给前排种子，避免轮空互碰
+    var order = [1, 2];
+    while (order.length < size) {
+      var out = [];
+      order.forEach(function (s) { out.push(s, order.length * 2 + 1 - s); });
+      order = out;
+    }
+    var slots = order.map(function (s) { return s <= n ? ps[s - 1] : null; });
+    var roundCount = Math.round(Math.log2(size));
+    t.rounds = [];
+    for (var r = 0; r < roundCount; r++) t.rounds.push([]);
+    for (var mi = 0; mi < size / 2; mi++) {
+      var sa = slots[mi * 2], sb = slots[mi * 2 + 1];
+      var match = { round: 0, idx: mi, a: null, b: null, done: false, winnerIdx: -1, bye: false };
+      if (sa && sb) { match.a = sa; match.b = sb; }
+      else {   // 轮空：直接晋级
+        match.a = sa || sb; match.b = null;
+        match.done = true; match.winnerIdx = 0; match.bye = true;
       }
-      t.semis = [[four[0], four[1]], [four[2], four[3]]];
-      t.final = [null, null];
+      t.rounds[0].push(match);
+    }
+    for (r = 1; r < roundCount; r++) {
+      for (mi = 0; mi < t.rounds[r - 1].length / 2; mi++) {
+        t.rounds[r].push({ round: r, idx: mi, a: null, b: null, done: false, winnerIdx: -1, bye: false });
+      }
+    }
+    // 轮空胜者向前传递
+    for (r = 0; r < roundCount - 1; r++) {
+      t.rounds[r].forEach(function (m) {
+        if (m.done && m.winnerIdx >= 0) feedWinner(t, m);
+      });
     }
     SG.UI.show('bracket');
   };
 
+  function feedWinner(t, m) {
+    var w = m.winnerIdx === 0 ? m.a : m.b;
+    var next = t.rounds[m.round + 1] && t.rounds[m.round + 1][Math.floor(m.idx / 2)];
+    if (!next) return;
+    if (m.idx % 2 === 0) next.a = w; else next.b = w;
+  }
+
   game.currentMatch = function () {
     var t = game.tournament;
-    if (t.semis.length) {
-      for (var i = 0; i < t.semis.length; i++) if (!t.semis[i].done) return t.semis[i];
-      if (t.final && t.final[0] && t.final[1] && !t.final.done) return t.final;
-      return null;
+    if (!t.rounds || t.champion) return null;
+    for (var r = 0; r < t.rounds.length; r++) {
+      for (var i = 0; i < t.rounds[r].length; i++) {
+        var m = t.rounds[r][i];
+        if (!m.done && m.a && m.b) return m;
+      }
     }
-    return t.final && t.final[0] && t.final[1] && !t.final.done ? t.final : null;
+    return null;
   };
 
   game.startTournamentMatch = function () {
-    var t = game.tournament;
     var m = game.currentMatch();
     if (!m) return;
-    var a = m[0], b = m[1];
+    var a = m.a, b = m.b;
     launchBattle({
       mode: 'tournament', stage: 'dojo', roundsToWin: 2, roundTime: 60,
       p1: { name: a.name, custom: cloneCustom(a.custom), ctrl: 'human' },
@@ -295,21 +328,20 @@
     m.done = true;
     m.winnerIdx = result.winner === 'p1' ? 0 : 1;
     var t = game.tournament;
-    var winner = m[m.winnerIdx];
-    var loser = m[1 - m.winnerIdx];
+    var winner = m.winnerIdx === 0 ? m.a : m.b;
+    var loser = m.winnerIdx === 0 ? m.b : m.a;
     var scoreLine = (result.winner === 'p1' ? result.p1.roundsWon : result.p2.roundsWon) + ' : ' +
                     (result.winner === 'p1' ? result.p2.roundsWon : result.p1.roundsWon);
     // 决赛 → 产生冠军
-    if (m === t.final) {
+    if (m.round === t.rounds.length - 1) {
       t.champion = winner;
-      // 2人参赛时没有季军（败者为亚军）
-      t.third = t.semis.length ? t.semis.map(function (s) { return s[1 - s.winnerIdx]; }) : [];
-      showCeremony();
+      var semiRound = t.rounds[t.rounds.length - 2];
+      t.third = semiRound ? semiRound.map(function (s) { return s.winnerIdx === 0 ? s.b : s.a; }) : [];
+      showCeremony(loser);
       return;
     }
-    // 半决赛 → 晋级
-    if (t.final[0] === null) t.final[0] = winner;
-    else t.final[1] = winner;
+    // 胜者晋级下一轮
+    feedWinner(t, m);
     SG.Audio.music('menu');
     SG.UI.showResult({
       title: winner.name + ' 晋级！', titleCls: 'win',
@@ -321,16 +353,14 @@
     });
   }
 
-  function showCeremony() {
+  function showCeremony(runnerUp) {
     var t = game.tournament;
     game.state = 'ceremony';
     hideUI();
     SG.Audio.music('ceremony');
     game.ceremony = {
-      t: 0, champion: t.champion, players: t.players,
-      second: t.final[1 - t.final.winnerIdx],
-      thirds: t.third,
-      done: false
+      t: 0, champion: t.champion, second: runnerUp,
+      thirds: t.third, players: t.players, done: false
     };
     var handler = function (e) {
       if (game.state !== 'ceremony') return;
@@ -373,7 +403,7 @@
   }
 
   game.quitTournament = function () {
-    game.tournament = { players: game.tournament.players, semis: [], final: null, champion: null, third: [], curIdx: 0 };
+    game.tournament = { players: game.tournament.players, rounds: [], champion: null, third: [], curIdx: 0 };
     game.state = 'menu';
     SG.Audio.music('menu');
     SG.UI.show('title');

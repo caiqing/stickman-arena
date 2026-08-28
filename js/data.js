@@ -202,12 +202,22 @@
     }
   ];
 
-  // ---------- 武林大会预设选手 ----------
+  // ---------- 武林大会预设选手（全家总动员） ----------
   var FAMILY_PRESETS = [
     { name: '爸爸', custom: bc('blue', 'short', 'none', 'belt', 'fist') },
     { name: '妈妈', custom: bc('pink', 'twintail', 'none', 'skirt', 'fist') },
     { name: '大宝', custom: bc('green', 'spiky', 'cap', 'none', 'fist') },
-    { name: '小宝', custom: bc('orange', 'bun', 'none', 'scarf', 'fist') }
+    { name: '小宝', custom: bc('orange', 'bun', 'none', 'scarf', 'fist') },
+    { name: '哥哥', custom: bc('cyan', 'pony', 'headband', 'none', 'fist') },
+    { name: '姐姐', custom: bc('purple', 'long', 'none', 'skirt', 'fist') },
+    { name: '弟弟', custom: bc('yellow', 'short', 'cap', 'scarf', 'fist') },
+    { name: '妹妹', custom: bc('red', 'twintail', 'none', 'skirt', 'fist') },
+    { name: '爷爷', custom: bc('white', 'curly', 'straw', 'belt', 'fist') },
+    { name: '奶奶', custom: bc('brown', 'bun', 'headband', 'skirt', 'fist') },
+    { name: '外公', custom: bc('black', 'none', 'straw', 'belt', 'fist') },
+    { name: '外婆', custom: bc('purple', 'bun', 'none', 'scarf', 'fist') },
+    { name: '叔叔', custom: bc('black', 'spiky', 'none', 'belt', 'fist') },
+    { name: '阿姨', custom: bc('green', 'curly', 'none', 'skirt', 'fist') }
   ];
 
   // ---------- 工具 ----------

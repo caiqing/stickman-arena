@@ -4,6 +4,8 @@
 音效与背景音乐全部由 WebAudio 实时合成，双击即玩，可离线运行。
 
 > 🎮 **在线试玩**：<https://caiqing.github.io/stickman-arena/> —— 家人扫码/点链接即开即玩，无需安装
+>
+> ![扫码试玩](media/qr-online.gif)
 
 ## 🎬 精彩对局
 

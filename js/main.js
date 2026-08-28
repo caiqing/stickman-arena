@@ -29,7 +29,7 @@
     storyStars: loadJSON('sga_stars', {}),
     settings: loadJSON('sga_settings', null),
 
-    versus: { p1: makeVersusSlot('玩家1'), p2: makeVersusSlot('玩家2'), p2cpu: false, difficulty: 1 },
+    versus: { p1: makeVersusSlot('玩家1'), p2: makeVersusSlot('玩家2'), p1auto: false, p2cpu: false, difficulty: 1 },
     tournament: { players: [], rounds: [], champion: null, third: [], curIdx: 0 },
     casual: null,
     battle: null,
@@ -83,6 +83,70 @@
     game.profile.storyCustom.name = '大侠';
     game.saveProfile();
   }
+
+  // ---------- 人物花名册：全局角色库，各模式从这里选人 ----------
+  game.roster = loadJSON('sga_roster', null);
+  if (!game.roster || !game.roster.length) {
+    var mk = function (name, color, hair, hat, clothes, weapon) {
+      var c = Object.assign(SG.DATA.defaultCustom(), { color: color, hair: hair, hat: hat, clothes: clothes, weapon: weapon, name: name });
+      return { id: 'c' + Math.random().toString(36).slice(2, 8), name: name, custom: c };
+    };
+    game.roster = [
+      mk('青龙剑客', 'blue', 'short', 'none', 'belt', 'sword'),
+      mk('赤焰拳王', 'red', 'spiky', 'none', 'belt', 'fist'),
+      mk('雪衣枪客', 'white', 'pony', 'none', 'scarf', 'spear'),
+      mk('轰天锤', 'orange', 'bun', 'straw', 'skirt', 'hammer')
+    ];
+    saveJSON('sga_roster', game.roster);
+  }
+  game.rosterSave = function (item) {
+    if (item.id) {
+      var it = game.roster.find(function (r) { return r.id === item.id; });
+      if (it) { it.name = item.name; it.custom = item.custom; }
+      else game.roster.push(item);
+    } else {
+      item.id = 'c' + Date.now().toString(36) + Math.floor(Math.random() * 1000);
+      game.roster.push(item);
+    }
+    saveJSON('sga_roster', game.roster);
+    return item;
+  };
+  game.rosterDelete = function (id) {
+    game.roster = game.roster.filter(function (r) { return r.id !== id; });
+    saveJSON('sga_roster', game.roster);
+  };
+  game.enterRoster = function () {
+    game.state = 'menu';
+    SG.Audio.music('menu');
+    SG.UI.show('roster');
+  };
+
+  // ---------- 大招演示：角色在演武场循环释放武器大招 ----------
+  game.startUltDemo = function (custom) {
+    var c = cloneCustom(custom);
+    var dummy = Object.assign(SG.DATA.defaultCustom(), {
+      color: 'black', hair: 'none', hat: 'none', clothes: 'none', weapon: 'fist', name: '木桩'
+    });
+    var battle = new SG.Battle({
+      mode: 'ultdemo', stage: 'dojo', roundsToWin: 9999, roundTime: 9999, demoLoop: true,
+      p1: { name: c.name || '演示', custom: c, ctrl: 'human' },
+      p2: { name: '木桩', custom: dummy, hp: 99999, ctrl: 'dummy' },
+      onEvent: function () {}
+    });
+    game.battle = battle;
+    game.battleMeta = null;
+    game.state = 'battle';
+    game.paused = false;
+    hideUI();
+    SG.Audio.music('battle');
+  };
+  game.stopUltDemo = function () {
+    game.battle = null;
+    game.state = 'menu';
+    SG.Audio.music('menu');
+    if (SG.UI._lastCustomCfg) SG.UI.openCustom(SG.UI._lastCustomCfg);   // 回到编辑器（保留编辑内容）
+    else SG.UI.show('title');
+  };
   if (!game.settings) {
     game.settings = { master: 0.8, music: 0.55, sfx: 0.9, touch: 'auto' };
   }
@@ -229,7 +293,8 @@
     launchBattle({
       mode: 'versus', stage: SG.DATA.STAGES[Math.floor(Math.random() * 6)].id,
       roundsToWin: 2, roundTime: 60,
-      p1: { name: v.p1.name, custom: cloneCustom(v.p1.custom), ctrl: 'human' },
+      p1: { name: v.p1.name, custom: cloneCustom(v.p1.custom),
+            ctrl: v.p1auto ? cloneCustom(game.aiByDifficulty[v.difficulty]) : 'human' },
       p2: { name: v.p2.name, custom: cloneCustom(v.p2.custom),
             ctrl: v.p2cpu ? cloneCustom(game.aiByDifficulty[v.difficulty]) : 'human' },
       onEnd: function (battle, result) { versusEnd(result, battle); }
@@ -241,8 +306,9 @@
     var loser = result.winner === 'p1' ? result.p2 : result.p1;
     var hpPct = winner.hpLeft / winner.maxHp;
     var score = 600 + Math.round(hpPct * 600) + winner.maxCombo * 20;
+    var aiJoined = game.versus.p1auto || game.versus.p2cpu || game.autoPilot;
     SG.Board.add({ name: winner.name, mode: '双人对战', score: score,
-      detail: '胜' + winner.roundsWon + '回合 · 最高' + winner.maxCombo + '连击' + (game.autoPilot ? ' · 托管' : '') });
+      detail: '胜' + winner.roundsWon + '回合 · 最高' + winner.maxCombo + '连击' + (aiJoined ? ' · 含AI' : '') });
     SG.Audio.music('menu');
     SG.UI.showResult({
       title: winner.name + ' 获胜！', titleCls: 'win',
@@ -596,7 +662,9 @@
       game.sysPause.classList.toggle('hiddenbtn', !inGame);
       game.sysAuto.classList.toggle('hiddenbtn', !(game.state === 'battle' || game.state === 'casual'));
       var padVis = SG.Touch && SG.Touch.isVisible();
-      game.sysbar.style.display = padVis ? 'none' : 'flex';
+      var demoOn = game.state === 'battle' && game.battle && game.battle.demoLoop;
+      game.sysbar.style.display = padVis || demoOn ? 'none' : 'flex';
+      game.demoExit.style.display = demoOn ? 'block' : 'none';
       if (game.sysMute) {
         game.sysMute.textContent = SG.Audio.getVolumes().master > 0 ? '🔊' : '🔇';
         game.sysMute.title = SG.Audio.getVolumes().master > 0 ? '静音 (M)' : '取消静音 (M)';
@@ -892,6 +960,16 @@
     game.sysAuto = sysbtn('🤖', 'AI 托管 (G)', function () { game.toggleAutoPilot(); });
     game.sysbar = sysbar;
     doc.getElementById('stage-wrap').appendChild(sysbar);
+
+    // 大招演示的退出按钮
+    var demoExit = doc.createElement('button');
+    demoExit.id = 'ultdemo-exit';
+    demoExit.textContent = '✕ 退出演示';
+    demoExit.className = 'sysbtn';
+    demoExit.style.cssText = 'position:fixed;top:12px;right:12px;width:auto;height:38px;border-radius:20px;font-size:14px;z-index:30;display:none;';
+    demoExit.addEventListener('click', function () { game.stopUltDemo(); });
+    doc.getElementById('stage-wrap').appendChild(demoExit);
+    game.demoExit = demoExit;
 
     global.addEventListener('error', function (e) {
       showErr('脚本错误: ' + e.message + ' @ ' + (e.filename || '?').split('/').pop() + ':' + e.lineno);

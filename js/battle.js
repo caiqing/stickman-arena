@@ -32,8 +32,9 @@
     var p2opts = { x: 900, facing: -1, hp: opts.p2.hp, isBoss: !!opts.p2.isBoss };
     this.p2 = new SG.Fighter(opts.p2.custom, p2opts);
     this.p2.name = opts.p2.name || this.p2.name;
-    this.p1.ctrl = opts.p1.ctrl || 'human';     // 'human' 或 AI参数对象
+    this.p1.ctrl = opts.p1.ctrl || 'human';     // 'human' / 'dummy' 或 AI参数对象
     this.p2.ctrl = opts.p2.ctrl || 'human';
+    this.demoLoop = !!opts.demoLoop;            // 大招演示模式：木桩自动回位回血，P1 循环放招
 
     this.floorY = FLOOR; this.minX = 40; this.maxX = W - 40;
     this.particles = []; this.dmgNums = []; this.projectiles = []; this.afterimages = [];
@@ -92,9 +93,9 @@
       if (this.hitstop > 0) {
         this.hitstop -= dt;
       } else if (active || this.phase === 'ko' || this.phase === 'roundend' || this.phase === 'matchend') {
-        // AI 输入
-        if (this.p1.ctrl !== 'human') i1 = SG.AI.think(this.p1, this.p2, sdt, this.p1.ctrl, this);
-        if (this.p2.ctrl !== 'human') i2 = SG.AI.think(this.p2, this.p1, sdt, this.p2.ctrl, this);
+        // AI 输入（dummy 木桩不思考）
+        if (this.p1.ctrl !== 'human' && this.p1.ctrl !== 'dummy') i1 = SG.AI.think(this.p1, this.p2, sdt, this.p1.ctrl, this);
+        if (this.p2.ctrl !== 'human' && this.p2.ctrl !== 'dummy') i2 = SG.AI.think(this.p2, this.p1, sdt, this.p2.ctrl, this);
         if (!active) { i1 = {}; i2 = {}; }   // 非战斗阶段锁操作
         this.lastInputs = { p1: i1, p2: i2 };  // 实际生效输入（录像用）
         this.p1.update(sdt, i1, this.p2, this);
@@ -125,6 +126,22 @@
       this.updateProjectiles(sdt);
       this.updateFx(sdt);
       this.updateAmbient(sdt);
+
+      // 大招演示模式：木桩回位回血、主角循环放招
+      if (this.demoLoop) {
+        var home = function (f, tx) { f.x += (tx - f.x) * Math.min(1, dt * 2.5); };
+        home(this.p1, 380);
+        home(this.p2, 900);
+        this.p2.hp = this.p2.maxHp;
+        this.p2.eye = 'normal';
+        if (this.p2.state === 'hurt' && this.hurtHold === undefined) { /* 保持受击姿态自然恢复 */ }
+        this.demoT = (this.demoT || 0) + dt;
+        if (this.p1.state !== 'ult' && this.demoT > 2.3) {
+          this.demoT = 0;
+          this.p1.meter = 100;
+          this.p1.startUlt(this.p2, this);
+        }
+      }
 
       if (this.shakeT > 0) this.shakeT -= dt;
       if (this.flash > 0) this.flash -= dt * 2;
@@ -533,6 +550,18 @@
 
     drawHUD: function (ctx) {
       var self = this;
+      // 大招演示模式：极简 HUD
+      if (this.demoLoop) {
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 24px system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,.9)';
+        ctx.fillText('🎯 大招演示 · ' + this.p1.name + ' · ' + this.p1.weapon.ult.name, W / 2, 42);
+        ctx.font = '13px system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,.55)';
+        ctx.fillText('点右上「✕」返回编辑', W / 2, 66);
+        ctx.textAlign = 'left';
+        return;
+      }
       function side(f, x, dir, color) {
         var bw = 430, bh = 22;
         var bx = dir > 0 ? x : x - bw;

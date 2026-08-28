@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>火柴人武林大会 · Stickman Arena</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -10,6 +10,8 @@
 <div id="stage-wrap">
   <canvas id="game" width="1280" height="720"></canvas>
   <div id="ui-root"></div>
+  <div id="vpad"></div>
+  <div id="rotate-hint">📱 建议横屏游玩，体验更佳</div>
   <div id="err-overlay" class="hidden"></div>
 </div>
 <script src="js/data.js"></script>
@@ -21,6 +23,7 @@
 <script src="js/replay.js"></script>
 <script src="js/leaderboard.js"></script>
 <script src="js/casual.js"></script>
+<script src="js/touch.js"></script>
 <script src="js/vendor/qrcode.min.js"></script>
 <script src="js/screens.js"></script>
 <script src="js/main.js"></script>

@@ -889,13 +889,31 @@
         r.appendChild(slider);
         panel.appendChild(r);
       });
+      // 虚拟按键（触屏设备）
+      var trow = el('div', 'opt-row');
+      trow.appendChild(el('div', 'opt-label', '虚拟按键'));
+      var touchBtns = [];
+      [['auto', '自动'], ['on', '常开'], ['off', '关闭']].forEach(function (p2) {
+        var b = btn(p2[1], function () {
+          g.settings.touch = p2[0];
+          g.saveSettings();
+          if (SG.Touch) SG.Touch.refresh();
+          touchBtns.forEach(function (x) { x.classList.remove('primary'); });
+          b.classList.add('primary');
+          SG.Audio.sfx('click');
+        }, 'small');
+        if ((g.settings.touch || 'auto') === p2[0]) b.classList.add('primary');
+        touchBtns.push(b);
+        trow.appendChild(b);
+      });
+      panel.appendChild(trow);
+      panel.appendChild(el('div', 'tiny', '虚拟按键：触屏设备上的屏幕按钮（战斗/休闲通用）。「自动」为检测到触屏时显示。'));
+
       var br = el('div', 'btn-row');
       br.appendChild(btn('返回', function () { UI.show('title'); }));
       panel.appendChild(br);
       s.appendChild(panel);
     },
-
-    // ================= 帮助 =================
     buildHelp: function () {
       var s = this.screens.help;
       s.className = 'screen dim';
@@ -935,6 +953,7 @@
         '· 蓄力条满后按大招键释放<b style="color:#ff9040">武器专属大招</b>，各有奇效：升龙拳/旋风斩/破空突刺/崩地震/烈焰火球/影连击<br>' +
         '· 格挡可减免85%伤害；跳跃中也可以出拳踢腿（跳踢）<br>' +
         '· 懒人托管：战斗与休闲玩法中按 <kbd>G</kbd> 或在暂停菜单开启「🤖 托管」，由 AI 代打；托管成绩入榜会标注（托管）<br>' +
+        '· 触屏设备会自动显示虚拟按键（可在设置中常开/关闭），手机建议横屏<br>' +
         '· 通用：<kbd>P</kbd>/<kbd>Esc</kbd> 暂停 · <kbd>M</kbd> 静音<br>' +
         '· 休闲模式：方向键与 WASD 通用' +
         '</div>'));

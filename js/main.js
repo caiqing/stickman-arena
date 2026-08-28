@@ -75,8 +75,9 @@
     game.saveProfile();
   }
   if (!game.settings) {
-    game.settings = { master: 0.8, music: 0.55, sfx: 0.9 };
+    game.settings = { master: 0.8, music: 0.55, sfx: 0.9, touch: 'auto' };
   }
+  if (game.settings.touch === undefined) game.settings.touch = 'auto';
   SG.Audio.setVolumes(game.settings);
 
   // ================= 输入 =================
@@ -98,7 +99,10 @@
       for (var code in map) if (keys[code]) o[map[code]] = true;
       return o;
     }
-    return { p1: via(P1_MAP), p2: via(P2_MAP) };
+    var p1 = via(P1_MAP);
+    var t = SG.Touch ? SG.Touch.input() : {};
+    for (var k in t) if (t[k]) p1[k] = true;   // 虚拟按键并入 P1
+    return { p1: p1, p2: via(P2_MAP) };
   }
   function casualInputs() {
     var r = readInputs();
@@ -532,8 +536,7 @@
     SG.UI.showPause(buildPauseButtons());
   }
 
-  function buildPauseButtons() {
-    var buttons = [{ label: '▶ 继续', primary: true, cb: function () { game.paused = false; SG.UI.show(null); } }];
+  function buildPauseButtons() {    var buttons = [{ label: '▶ 继续', primary: true, cb: function () { game.paused = false; SG.UI.show(null); } }];
     if (game.state === 'battle' || game.state === 'casual') {
       buttons.push({ label: game.autoPilot ? '🤖 托管：开（点击关闭）' : '🤖 托管：关（点击开启）', cb: function () {
         game.toggleAutoPilot();
@@ -559,6 +562,7 @@
     } });
     return buttons;
   }
+  game.togglePause = togglePause;   // 供触屏暂停按钮调用
 
   // ================= 主循环 =================
   var lastT = 0, acc = 0;
@@ -569,6 +573,14 @@
     if (!lastT) lastT = ts;
     var el = Math.min(0.25, (ts - lastT) / 1000);
     lastT = ts;
+
+    // 虚拟按键随游戏状态/玩法切换
+    if (SG.Touch) {
+      var touchMode = null;
+      if (game.state === 'battle') touchMode = 'battle';
+      else if (game.state === 'casual' && game.casual) touchMode = game.casual.constructor.name.toLowerCase();
+      SG.Touch.sync(touchMode);
+    }
 
     if (!game.paused) {
       acc += el;
@@ -839,6 +851,7 @@
     game.canvas = doc.getElementById('game');
     game.ctx = game.canvas.getContext('2d');
     SG.UI.init(doc.getElementById('ui-root'));
+    if (SG.Touch) SG.Touch.init();
     SG.UI.show('title');
 
     global.addEventListener('error', function (e) {

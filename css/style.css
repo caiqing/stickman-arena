@@ -276,6 +276,28 @@ input[type=range] { accent-color: #f5b942; width: 200px; }
   #screen-title h1.logo { font-size: 30px; letter-spacing: 3px; }
 }
 
+/* ---- 人物设定（花名册）网格 ---- */
+.roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.roster-card {
+  background: #1a1e33;
+  border: 1px solid #3a4266;
+  border-radius: 12px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.roster-card.pick { cursor: pointer; transition: all .12s; }
+.roster-card.pick:hover { border-color: #ffd97a; transform: translateY(-2px); background: #20253f; }
+.roster-card canvas { width: 84px; height: 104px; }
+.rname2 { color: #ffe9a8; font-size: 16px; margin-top: 4px; }
+.rweapon { color: #8d97b8; font-size: 12px; margin: 2px 0 8px; }
+.roster-ops { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.roster-ops .btn { padding: 4px 8px; font-size: 12px; letter-spacing: 0; }
+
 /* ---- 移动端虚拟按键 ---- */
 #game { touch-action: none; }
 body { overscroll-behavior: none; }

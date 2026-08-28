@@ -303,6 +303,7 @@
           // 小画布：只画头像
           SG.Stick.drawPortrait(ctx, p.custom, p.canvas.width, p.canvas.height, p.t);
         } else {
+          ctx.clearRect(0, 0, p.canvas.width, p.canvas.height);   // 清屏防残影
           SG.Stick.draw(ctx, {
             x: 130, y: 300, facing: 1, pose: 'idle', t: p.t,
             custom: p.custom, scale: 1.55

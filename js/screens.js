@@ -155,7 +155,9 @@
       row2.appendChild(btn('设置', function () { UI.show('settings'); }, 'small'));
       menu.appendChild(row2);
       panel.appendChild(menu);
-      panel.appendChild(el('div', 'tiny', '首次进入请点击任意按钮以开启声音 · M 静音'));
+      var hint = el('div', 'tiny', '首次进入请点击任意按钮以开启声音 · M 静音');
+      hint.style.marginTop = '22px';
+      panel.appendChild(hint);
       panel.style.marginTop = '20px';
       s.appendChild(panel);
     },

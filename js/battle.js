@@ -540,7 +540,8 @@
         ctx.font = 'bold 17px system-ui, sans-serif';
         ctx.fillStyle = '#fff';
         ctx.textAlign = dir > 0 ? 'left' : 'right';
-        ctx.fillText((f.isBoss ? '👑 BOSS · ' : '') + f.name, dir > 0 ? bx : bx + bw, 38);
+        var tag = (f === self.p1 && self.p1.ctrl !== 'human') ? ' 🤖托管' : '';
+        ctx.fillText((f.isBoss ? '👑 BOSS · ' : '') + f.name + tag, dir > 0 ? bx : bx + bw, 38);
         // HP
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
         ctx.fillRect(bx, 46, bw, bh);

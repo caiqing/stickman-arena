@@ -69,9 +69,27 @@
     return notes;
   };
 
+  Dance.prototype.aiInput = function (dt) {
+    // 托管 AI：踩着判定点按下音符对应的方向键
+    for (var i = 0; i < this.notes.length; i++) {
+      var n = this.notes[i];
+      if (n.state !== 0) continue;
+      var diff = n.t - this.time;
+      if (diff < -0.05) continue;
+      if (diff <= 0.028) {
+        var o = {};
+        o[this.laneKeys[n.lane]] = true;
+        return o;
+      }
+      return {};   // notes 按时间有序，最近的还没到点
+    }
+    return {};
+  };
+
   Dance.prototype.update = function (dt, inp) {
     if (this.over) return;
     this.time += dt;
+    if (SG.game && SG.game.autoPilot) inp = this.aiInput(dt);
     var e = edges(inp, this.prev);
     this.prev = Object.assign({}, inp);
 
@@ -288,8 +306,58 @@
     this.spawnX += 320 + Math.random() * 260;
   };
 
+  Boat.prototype.aiBoat = function (dt) {
+    var inp = {};
+    var boatWX = this.scrollX + W / 2;
+    var myLaneY = BOAT_LANES[this.lane];
+    // 前方本水道有威胁 → 换到安全水道（按目标水道判定，避免平滑坐标误判相邻道）
+    this._aiMoveT = (this._aiMoveT === undefined ? 0 : this._aiMoveT) - dt;
+    var danger = null, bestD = 1e9;
+    for (var i = 0; i < this.obstacles.length; i++) {
+      var o = this.obstacles[i];
+      if (o.hit) continue;
+      var d = o.x - boatWX;
+      if (d > -20 && d < 560 && Math.abs(o.y - myLaneY) < 40 && d < bestD) { danger = o; bestD = d; }
+    }
+    var canRow = true;
+    if (danger && this._aiMoveT <= 0) {
+      var cands = [];
+      if (this.lane > 0) cands.push(this.lane - 1);
+      if (this.lane < 2) cands.push(this.lane + 1);
+      var self = this;
+      var safe = cands.filter(function (l) {
+        return !this.obstacles.some(function (o) {
+          return !o.hit && Math.abs(o.y - BOAT_LANES[l]) < 40 &&
+                 o.x - boatWX > -20 && o.x - boatWX < 560;
+        });
+      }, this);
+      var target;
+      if (safe.length) {
+        target = safe[0];
+      } else if (bestD < 320) {
+        canRow = false;   // 三道全堵 → 松桨减速，等错开
+        target = this.lane;
+      } else {
+        target = this.lane === 0 ? 1 : this.lane === 2 ? 1 : (danger.y > myLaneY ? this.lane - 1 : this.lane + 1);
+      }
+      if (target !== this.lane) {
+        if (target < this.lane) inp.up = true; else inp.down = true;
+        this._aiMoveT = 0.24;
+      }
+    }
+    // 固定节奏交替划桨（避障需要时可暂停划桨减速）
+    this._aiRowT = (this._aiRowT === undefined ? 0 : this._aiRowT) - dt;
+    if (canRow && this._aiRowT <= 0) {
+      this._aiRowKey = this._aiRowKey === 'left' ? 'right' : 'left';
+      inp[this._aiRowKey] = true;
+      this._aiRowT = 0.24;
+    }
+    return inp;
+  };
+
   Boat.prototype.update = function (dt, inp) {
     if (this.over) return;
+    if (SG.game && SG.game.autoPilot) inp = this.aiBoat(dt);
     var e = edges(inp, this.prev);
     this.prev = Object.assign({}, inp);
     this.bobT += dt;
@@ -521,9 +589,33 @@
     this.spawnX += 240 + Math.random() * 220;
   };
 
+  Fly.prototype.aiFly = function (dt) {
+    // 托管 AI：躲避气球/小鸟，顺路捡星星
+    var threat = null, threatD = 1e9, star = null, starD = 1e9;
+    for (var i = 0; i < this.items.length; i++) {
+      var it = this.items[i];
+      if (it.got) continue;
+      var sx = it.x - this.scrollX + 300;
+      var d = sx - this.x;
+      if (d < -20 || d > 420) continue;
+      var iy = it.y + (it.type === 'bird' ? Math.sin(this.t * 4 + it.ph) * 30 : 0);
+      if (it.type === 'star') {
+        if (d < starD) { star = it; star.y = iy; starD = d; }
+      } else if (Math.abs(iy - this.y) < 92 && d < threatD) {
+        threat = it; threat.y = iy; threatD = d;
+      }
+    }
+    var targetY = 340;
+    if (threat) targetY = threat.y > this.y ? this.y - 95 : this.y + 95;   // 从反方向绕开
+    else if (star) targetY = star.y;
+    targetY = clamp(targetY, 235, 585);
+    return { up: this.y > targetY + 14 };   // 低于目标高度 → 喷气
+  };
+
   Fly.prototype.update = function (dt, inp) {
     if (this.over) return;
     this.t += dt;
+    if (SG.game && SG.game.autoPilot) inp = this.aiFly(dt);
     var e = edges(inp, this.prev);
     this.prev = Object.assign({}, inp);
 

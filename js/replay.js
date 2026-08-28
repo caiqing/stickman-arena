@@ -86,6 +86,58 @@
     remove: function (id) { save(load().filter(function (r) { return r.id !== id; })); },
     clear: function () { save([]); },
 
+    // ---------- 分享：编码 / 解码 / 导入 ----------
+    // 压缩为可粘贴的分享码（微信里当文本消息发送）
+    encode: function (item) {
+      var compact = {
+        v: 1,
+        m: item.modeLabel, r: item.result, d: Math.round(item.duration || 0),
+        s: item.stage, w: item.roundsToWin,
+        p1: { n: item.p1.name, c: item.p1.custom },
+        p2: { n: item.p2.name, c: item.p2.custom },
+        f: item.data
+      };
+      var json = JSON.stringify(compact);
+      return 'SGA1.' + btoa(unescape(encodeURIComponent(json)));
+    },
+    // 解析分享码或完整分享链接（含 #r=），失败返回 null
+    decode: function (str) {
+      try {
+        str = String(str);
+        var i = str.indexOf('SGA1.');
+        if (i < 0) return null;
+        var b64 = str.slice(i + 5).replace(/[\s"#&]+/g, '');
+        var json = decodeURIComponent(escape(atob(b64)));
+        var c = JSON.parse(json);
+        if (!c || c.v !== 1 || !c.f || !c.p1 || !c.p2) return null;
+        return {
+          id: 'r' + Date.now(),
+          name: (c.m || '对局') + ' · 分享',
+          date: Date.now(),
+          modeLabel: c.m || '对局', result: c.r || '', duration: c.d || 0,
+          stage: c.s || 'dojo', roundsToWin: c.w || 2,
+          p1: { name: c.p1.n, custom: c.p1.c }, p2: { name: c.p2.n, custom: c.p2.c },
+          data: c.f
+        };
+      } catch (e) { return null; }
+    },
+    shareLink: function (item) {
+      var base = global.location ? global.location.href.split('#')[0] : '';
+      return base + '#r=' + this.encode(item);
+    },
+    fromHash: function () {
+      if (!global.location || global.location.hash.indexOf('#r=') !== 0) return null;
+      return this.decode(global.location.hash.slice(3));
+    },
+    importItem: function (item) {
+      var list = load();
+      item.id = 'r' + Date.now();
+      list.unshift(item);
+      while (list.length > MAX) list.pop();
+      save(list);
+      return item;
+    },
+
     // ---------- 回放 ----------
     player: null,
     beginPlayback: function (item) {

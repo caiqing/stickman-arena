@@ -35,6 +35,8 @@
     battle: null,
     battleMeta: null,
     lastReplayItem: null,
+    autoPilot: false,                          // 托管：AI 代打
+    aiTopParams: { aggr: 0.72, block: 0.42, jump: 0.16, reaction: 0.26 },
     _restartFn: null,
     _quitFn: null,
     menuT: 0,
@@ -53,6 +55,17 @@
       { aggr: 0.5, block: 0.22, jump: 0.1, reaction: 0.4 },
       { aggr: 0.72, block: 0.38, jump: 0.15, reaction: 0.28 }
     ]
+  };
+
+  // ---------- 托管（懒人模式）：AI 代打当前战斗 ----------
+  game.toggleAutoPilot = function () {
+    game.autoPilot = !game.autoPilot;
+    if (game.state === 'battle' && game.battle) {
+      game.battle.p1.ctrl = game.autoPilot ? cloneCustom(game.aiTopParams) : 'human';
+    }
+    SG.Audio.sfx(game.autoPilot ? 'ultReady' : 'click');
+    if (SG.UI.toast) SG.UI.toast(game.autoPilot ? '🤖 AI 已接管，放心躺平' : '已恢复手动操作');
+    return game.autoPilot;
   };
 
   // 初始化默认档案
@@ -153,7 +166,7 @@
     var wasProgress = game.storyProgress;
     game.storyProgress = Math.max(game.storyProgress, lv.id);
     game.saveProgress();
-    SG.Board.add({ name: game.profile.name, mode: '故事', score: score, detail: '第' + lv.id + '关 · ' + stars + '星' });
+    SG.Board.add({ name: game.profile.name, mode: '故事', score: score, detail: '第' + lv.id + '关 · ' + stars + '星' + (game.autoPilot ? ' · 托管' : '') });
 
     var rewards = [];
     if (game.storyProgress > wasProgress) {
@@ -216,7 +229,7 @@
     var hpPct = winner.hpLeft / winner.maxHp;
     var score = 600 + Math.round(hpPct * 600) + winner.maxCombo * 20;
     SG.Board.add({ name: winner.name, mode: '双人对战', score: score,
-      detail: '胜' + winner.roundsWon + '回合 · 最高' + winner.maxCombo + '连击' });
+      detail: '胜' + winner.roundsWon + '回合 · 最高' + winner.maxCombo + '连击' + (game.autoPilot ? ' · 托管' : '') });
     SG.Audio.music('menu');
     SG.UI.showResult({
       title: winner.name + ' 获胜！', titleCls: 'win',
@@ -425,7 +438,7 @@
   function casualEnd() {
     var c = game.casual;
     var r = c.result;
-    SG.Board.add({ name: game.profile.name, mode: r.mode, score: r.score, detail: r.title });
+    SG.Board.add({ name: game.profile.name, mode: r.mode, score: r.score, detail: r.title + (game.autoPilot ? ' · 托管' : '') });
     SG.Audio.music('menu');
     SG.UI.showResult({
       title: r.title, titleCls: 'win',
@@ -492,6 +505,7 @@
     game.state = 'battle';
     game.paused = false;
     hideUI();
+    if (game.autoPilot) battle.p1.ctrl = cloneCustom(game.aiTopParams);   // 托管生效
     SG.Audio.music(cfg.mode === 'story' && cfg.storyLevel && cfg.storyLevel.finalBoss ? 'boss' :
       cfg.mode === 'story' ? 'boss' : 'battle');
     // 录制开始
@@ -515,13 +529,21 @@
     if (game.state !== 'battle' && game.state !== 'casual' && game.state !== 'replay') return;
     if (game.paused) { game.paused = false; SG.UI.show(null); return; }
     game.paused = true;
+    SG.UI.showPause(buildPauseButtons());
+  }
+
+  function buildPauseButtons() {
     var buttons = [{ label: '▶ 继续', primary: true, cb: function () { game.paused = false; SG.UI.show(null); } }];
+    if (game.state === 'battle' || game.state === 'casual') {
+      buttons.push({ label: game.autoPilot ? '🤖 托管：开（点击关闭）' : '🤖 托管：关（点击开启）', cb: function () {
+        game.toggleAutoPilot();
+        SG.UI.showPause(buildPauseButtons());   // 刷新按钮状态
+      } });
+    }
     if (game.state === 'battle' && game.battleMeta) {
       buttons.push({ label: '🔄 重新开始', cb: function () {
         game.paused = false;
-        var meta = game.battleMeta;
-        var same = Object.assign({}, meta);
-        launchBattle(same);
+        launchBattle(Object.assign({}, game.battleMeta));
       } });
     }
     var quitLabels = { battle: '退出战斗', casual: '退出休闲', replay: '退出回放' };
@@ -535,7 +557,7 @@
         game.battleMeta && game.battleMeta.mode === 'tournament' ? 'bracket' :
         game.battleMeta && game.battleMeta.mode === 'versus' ? 'versusSetup' : 'title');
     } });
-    SG.UI.showPause(buttons);
+    return buttons;
   }
 
   // ================= 主循环 =================
@@ -602,9 +624,83 @@
     }
   }
 
-  // 菜单背景：两个火柴人切磋
+  // 菜单背景：两个火柴人在两侧随机演武（组合拳/大招/对拳/跳跃/挑衅），带音效特效
   function drawMenuBg(ctx) {
     var t = game.menuT;
+    var d = game.demo || (game.demo = { scene: 'idle', st: 0, dur: 1.2, actor: 0, last: t, fx: [], banner: null, shake: 0, flash: 0, flags: {} });
+    var dt = Math.max(0, Math.min(0.05, t - (d.last || t)));
+    d.last = t;
+    d.st += dt;
+    if (d.shake > 0) d.shake -= dt;
+    if (d.flash > 0) d.flash -= dt * 2;
+    if (d.banner) { d.banner.t += dt; if (d.banner.t > 1.2) d.banner = null; }
+
+    function sfx(n) { if (SG.Audio) SG.Audio.sfx(n); }
+    function spark(x, y, n, big) {
+      for (var i = 0; i < (n || 8); i++) {
+        d.fx.push({ x: x, y: y, vx: (Math.random() - 0.5) * (big ? 380 : 260), vy: -Math.random() * 260 - 40,
+                    life: 0.45 + Math.random() * 0.2, c: big ? '#ffb347' : '#ffe08a', s: big ? 5 : 3 });
+      }
+      if (d.fx.length > 80) d.fx.splice(0, d.fx.length - 80);
+    }
+
+    // 场景切换
+    if (d.st >= d.dur) {
+      var SCENES = ['combo', 'ult', 'spar', 'jump', 'victory', 'idle'];
+      var s = SCENES[Math.floor(Math.random() * SCENES.length)];
+      if (s === d.scene) s = SCENES[(SCENES.indexOf(s) + 1) % SCENES.length];
+      d.scene = s; d.st = 0; d.flags = {};
+      d.actor = Math.random() < 0.5 ? 0 : 1;
+      d.dur = { combo: 1.8, ult: 1.7, spar: 1.3, jump: 1.25, victory: 1.9, idle: 0.9 + Math.random() * 0.9 }[s] || 1.4;
+    }
+
+    // 各场景姿势编排
+    var p = d.st, who = d.actor;
+    var poseL = 'idle', poseR = 'idle', yL = 0, yR = 0;
+    var ultNames = ['升龙拳', '旋风斩'];
+    if (d.scene === 'combo') {
+      var ap, dp = p < 0.92 ? 'block' : (p < 1.55 ? 'hurt' : 'idle');
+      if (p < 0.3) ap = 'punchW';
+      else if (p < 0.45) { ap = 'punchX'; if (!d.flags.s1) { d.flags.s1 = 1; sfx('punch'); } }
+      else if (p < 0.62) ap = 'punchW';
+      else if (p < 0.78) { ap = 'punchX'; if (!d.flags.s2) { d.flags.s2 = 1; sfx('hit'); } }
+      else if (p < 0.95) ap = 'kickW';
+      else if (p < 1.12) { ap = 'kickX'; if (!d.flags.s3) { d.flags.s3 = 1; sfx('hitHeavy'); d.shake = 0.22; } }
+      else ap = 'idle';
+      if (p > 0.78 && p < 1.0 && !d.flags.sp) { d.flags.sp = 1; spark(who === 0 ? 1000 : 280, 500, 10, true); }
+      if (who === 0) { poseL = ap; poseR = dp; } else { poseR = ap; poseL = dp; }
+    } else if (d.scene === 'ult') {
+      var up;
+      if (p < 0.4) { up = 'charge'; dp = 'idle'; }
+      else if (p < 1.05) {
+        up = 'ult';
+        if (!d.flags.boom) {
+          d.flags.boom = 1;
+          sfx('ult'); d.flash = 0.7; d.shake = 0.4;
+          d.banner = { text: '「' + ultNames[who] + '」', t: 0, actor: who };
+          spark(who === 0 ? 1000 : 280, 500, 16, true);
+        }
+        dp = p > 0.55 ? 'hurt' : 'block';
+      } else { up = 'idle'; dp = 'hurt'; }
+      if (who === 0) { poseL = up; poseR = dp; } else { poseR = up; poseL = dp; }
+    } else if (d.scene === 'spar') {
+      if (p < 0.45) { poseL = poseR = 'punchW'; }
+      else if (p < 0.62) {
+        poseL = poseR = 'punchX';
+        if (!d.flags.clash) { d.flags.clash = 1; sfx('block'); d.shake = 0.18; spark(640, 520, 12, true); }
+      } else { poseL = poseR = 'idle'; }
+    } else if (d.scene === 'jump') {
+      var jp = Math.min(1, p / 0.85);
+      var jy = -Math.sin(jp * Math.PI) * 120;
+      var jpose = jp < 0.5 ? 'jump' : 'fall';
+      if (who === 0) { poseL = jpose; yL = jy; poseR = 'idle'; } else { poseR = jpose; yR = jy; poseL = 'idle'; }
+      if (jp >= 1 && !d.flags.land) { d.flags.land = 1; sfx('land'); d.shake = 0.12; }
+    } else if (d.scene === 'victory') {
+      if (who === 0) { poseL = 'victory'; poseR = 'ko'; } else { poseR = 'victory'; poseL = 'ko'; }
+      if (!d.flags.win) { d.flags.win = 1; sfx('win'); }
+    }
+
+    // 背景
     var g = ctx.createLinearGradient(0, 0, 0, 720);
     g.addColorStop(0, '#1c2237'); g.addColorStop(1, '#0b0b12');
     ctx.fillStyle = g; ctx.fillRect(0, 0, 1280, 720);
@@ -618,25 +714,56 @@
     ctx.strokeStyle = 'rgba(255,255,255,0.12)';
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(0, 620); ctx.lineTo(1280, 620); ctx.stroke();
-    // 演武的两个火柴人
-    var cyc = t % 6;
-    var hero = Object.assign(SG.DATA.defaultCustom(), { color: 'blue', weapon: 'sword' });
-    var foe = Object.assign(SG.DATA.defaultCustom(), { color: 'red', weapon: 'fist' });
-    function act(x) {
-      if (cyc < 1.2) return 'idle';
-      if (cyc < 1.4) return 'punchX';
-      if (cyc < 1.8) return 'punchW';
-      if (cyc < 2.6) return 'idle';
-      if (cyc < 2.8) return 'kickX';
-      if (cyc < 3.2) return 'kickW';
-      if (cyc < 4) return 'block';
-      return 'idle';
+
+    // 震屏包裹
+    var sx = d.shake > 0 ? (Math.random() - 0.5) * 10 : 0;
+    var sy = d.shake > 0 ? (Math.random() - 0.5) * 8 : 0;
+    ctx.save();
+    ctx.translate(sx, sy);
+
+    // 粒子
+    for (var f = d.fx.length - 1; f >= 0; f--) {
+      var pt = d.fx[f];
+      pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.vy += 900 * dt; pt.life -= dt;
+      if (pt.life <= 0) { d.fx.splice(f, 1); continue; }
+      ctx.globalAlpha = Math.min(1, pt.life * 2.5);
+      ctx.fillStyle = pt.c;
+      ctx.fillRect(pt.x - pt.s / 2, pt.y - pt.s / 2, pt.s, pt.s);
+      ctx.globalAlpha = 1;
     }
-    var a1 = act(0), a2 = act(2.4);
-    SG.Stick.draw(ctx, { x: 480, y: 620, facing: 1, pose: a1 === 'block' ? 'block' : a1, t: t, custom: hero, vx: 0 });
-    SG.Stick.draw(ctx, { x: 800, y: 620, facing: -1, pose: a2 === 'block' ? 'block' : a2, t: t + 1, custom: foe, vx: 0 });
-    if (cyc > 1.25 && cyc < 1.45) { ctx.fillStyle = '#ffe08a'; ctx.font = 'bold 26px system-ui'; ctx.fillText('✦', 640, 500); }
-    if (cyc > 2.85 && cyc < 3.05) { ctx.fillStyle = '#ffe08a'; ctx.font = 'bold 30px system-ui'; ctx.fillText('✷', 640, 520); }
+
+    // 两侧演武的火柴人
+    var hero = { color: 'blue', hair: 'short', hat: 'none', clothes: 'belt', weapon: 'sword', gear: 'none', name: '' };
+    var foe = { color: 'red', hair: 'spiky', hat: 'none', clothes: 'scarf', weapon: 'fist', gear: 'none', name: '' };
+    var glow = (d.scene === 'ult' && p < 0.4) ? 0.8 : 0;
+    var glowL = (d.scene === 'ult' && who === 0) ? glow : 0;
+    var glowR = (d.scene === 'ult' && who === 1) ? glow : 0;
+    SG.Stick.draw(ctx, { x: 150, y: 620 + yL, facing: 1, pose: poseL, t: t, custom: hero, vx: 0, glow: glowL });
+    SG.Stick.draw(ctx, { x: 1130, y: 620 + yR, facing: -1, pose: poseR, t: t + 1, custom: foe, vx: 0, glow: glowR });
+    ctx.restore();
+
+    // 大招白闪 + 招式横幅
+    if (d.flash > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,' + Math.min(0.5, d.flash) + ')';
+      ctx.fillRect(0, 0, 1280, 720);
+    }
+    if (d.banner) {
+      var b = d.banner;
+      var a = b.t < 0.15 ? b.t / 0.15 : b.t > 0.85 ? Math.max(0, 1 - (b.t - 0.85) / 0.35) : 1;
+      var sc = b.t < 0.2 ? 0.5 + b.t * 2.5 : 1;
+      var bx = b.actor === 0 ? 150 : 1130;
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.translate(bx, 380);
+      ctx.scale(sc, sc);
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 36px system-ui, sans-serif';
+      ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(120,20,20,0.9)';
+      ctx.strokeText(b.text, 0, 0);
+      ctx.fillStyle = '#ffd34d';
+      ctx.fillText(b.text, 0, 0);
+      ctx.restore();
+    }
   }
 
   // 领奖台
@@ -721,6 +848,27 @@
       showErr('Promise错误: ' + (e.reason && e.reason.message || e.reason));
     });
 
+    // 微信/浏览器点开的分享链接：自动弹出导入提示（含同页面 hash 变化）
+    function promptSharedReplay() {
+      var shared = SG.Replay.fromHash();
+      if (!shared) return;
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+      SG.UI.showResult({
+        title: '🎬 收到分享录像', titleCls: 'win',
+        sub: (shared.modeLabel || '对局') + ' · ' + shared.p1.name + ' vs ' + shared.p2.name,
+        lines: shared.result ? [['比分结果', shared.result]] : [],
+        buttons: [
+          { label: '▶ 导入并观看', primary: true, cb: function () {
+              SG.Replay.importItem(shared);
+              game.startReplay(shared);
+            } },
+          { label: '忽略', cb: function () { SG.UI.show('title'); } }
+        ]
+      });
+    }
+    promptSharedReplay();
+    global.addEventListener('hashchange', promptSharedReplay);
+
     // 键盘
     doc.addEventListener('keydown', function (e) {
       if (GAME_CODES.has(e.code)) {
@@ -736,6 +884,9 @@
       }
       if (e.code === 'KeyP' || e.code === 'Escape') {
         if (game.state === 'battle' || game.state === 'casual' || game.state === 'replay') togglePause();
+      }
+      if (e.code === 'KeyG') {
+        if (game.state === 'battle' || game.state === 'casual') game.toggleAutoPilot();
       }
     });
     doc.addEventListener('keyup', function (e) { keys[e.code] = false; });

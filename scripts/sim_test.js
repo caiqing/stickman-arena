@@ -4,7 +4,8 @@ var fs = require('fs');
 var path = require('path');
 var vm = require('vm');
 
-var ctx = { console: console, Math: Math, Date: Date, performance: { now: () => 0 } };
+var ctx = { console: console, Math: Math, Date: Date, performance: { now: () => 0 },
+            btoa: btoa, atob: atob, escape: escape, unescape: unescape };
 vm.createContext(ctx);
 // 依顺序加载引擎相关脚本（不含 DOM/UI 模块）
 ['data.js', 'audio.js', 'stickman.js', 'fighter.js', 'battle.js', 'ai.js', 'replay.js'].forEach(function (f) {
@@ -25,7 +26,7 @@ function runBattle(opts, withRecording) {
     p2: { name: '乙', custom: Object.assign(SG.DATA.defaultCustom(), opts.p2 || {}), ctrl: opts.p2ai },
     onEvent: function (type, data) { if (type === 'matchEnd') { done = true; result = data; } }
   });
-  if (withRecording) SG.Replay.start({ modeLabel: '测试', p1: { name: '甲', custom: {} }, p2: { name: '乙', custom: {} }, stage: 'dojo', roundsToWin: 2 });
+  if (withRecording) SG.Replay.start({ modeLabel: '测试', p1: { name: '甲', custom: {} }, p2: { name: opts.p2.name || '乙', custom: {} }, stage: opts.stage || 'dojo', roundsToWin: 2 });
   var dt = 1 / 60, t = 0, frames = [];
   while (!done && t < 60 * 240) {   // 上限4分钟模拟
     battle.update(dt, {});          // AI 在 battle.update 内部生成
@@ -112,6 +113,29 @@ console.log('== 测试3：录像回放一致性 ==');
     ' 位置一致=' + sameX);
   if (!sameHp || !sameX) failures++;
   SG.Replay.endPlayback();
+})();
+
+// ---- 测试3b：分享码 编码→解码 往返 ----
+console.log('== 测试3b：分享码往返 ==');
+(function () {
+  var r = runBattle({
+    p1: { weapon: 'staff' }, p2: { weapon: 'sword', name: '小红' },
+    p1ai: { aggr: 0.5, block: 0.2, jump: 0.1, reaction: 0.35 },
+    p2ai: { aggr: 0.5, block: 0.2, jump: 0.1, reaction: 0.35 }
+  }, true);
+  var rec = r.rec;
+  if (!rec) { failures++; console.log('  录像未保存!'); return; }
+  rec.p1.name = '大侠丶小白';
+  var code = SG.Replay.encode(rec);
+  var back = SG.Replay.decode(code);
+  var viaLink = SG.Replay.decode('http://x.com/index.html#r=' + code);
+  var same = back && viaLink &&
+    back.data.length === rec.data.length && JSON.stringify(back.data) === JSON.stringify(rec.data) &&
+    viaLink.p1.name === '大侠丶小白' && viaLink.p2.name === '小红' &&
+    back.stage === rec.stage && Math.abs(back.duration - rec.duration) < 1;
+  var bad = SG.Replay.decode('垃圾输入SGA1.!!!') || SG.Replay.decode('随便什么') ;
+  console.log('  分享码 ' + code.length + ' 字符 · 往返一致=' + !!same + ' · 坏输入拒绝=' + (bad === null));
+  if (!same || bad !== null) failures++;
 })();
 
 // ---- 测试4：故事模式全部Boss可击败（高攻击AI vs Boss） ----

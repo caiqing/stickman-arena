@@ -20,6 +20,37 @@
   }
   function unlocked(item) { return !item.locked || (SG.game.storyProgress || 0) >= item.locked; }
 
+  // 轻提示
+  var toastTimer = null;
+  function toast(msg) {
+    var t = doc.getElementById('sga-toast');
+    if (!t) {
+      t = el('div');
+      t.id = 'sga-toast';
+      t.style.cssText = 'position:fixed;left:50%;top:12%;transform:translateX(-50%);' +
+        'background:rgba(20,24,40,.96);border:1px solid #ffd97a;color:#ffe9a8;' +
+        'padding:10px 22px;border-radius:10px;font-size:15px;z-index:98;letter-spacing:1px;';
+      doc.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.style.display = 'none'; }, 2000);
+  }
+
+  // 复制文本框内容（剪贴板 API + execCommand 兜底）
+  function copyText(ta) {
+    ta.focus(); ta.select();
+    var ok = false;
+    try { ok = doc.execCommand('copy'); } catch (e) {}
+    if (global.navigator.clipboard) {
+      global.navigator.clipboard.writeText(ta.value).catch(function () {});
+      ok = true;
+    }
+    SG.Audio.sfx('unlock');
+    toast(ok ? '已复制，去微信粘贴发送即可' : '请手动全选复制');
+  }
+
   // 可循环选择的选项组
   function optionRow(label, list, getId, getName, get, set, previewTick) {
     var row = el('div', 'opt-row');
@@ -64,7 +95,7 @@
     init: function (root) {
       this.root = root;
       var names = ['title', 'custom', 'storyMap', 'dialogue', 'versusSetup',
-        'tournamentSetup', 'bracket', 'casualHub', 'leaderboard', 'replays',
+        'tournamentSetup', 'bracket', 'casualHub', 'leaderboard', 'replays', 'share',
         'settings', 'help', 'result', 'pause'];
       var self = this;
       names.forEach(function (n) {
@@ -105,10 +136,11 @@
     buildTitle: function () {
       var s = this.screens.title;
       s.className = 'screen';
-      var panel = el('div', '');
+      var panel = el('div', 'panel title-panel');
       panel.style.textAlign = 'center';
       panel.appendChild(el('h1', 'logo', '火柴人武林大会'));
       panel.appendChild(el('div', 'subtitle', 'STICKMAN KUNGFU ARENA · 墨水大陆武林传奇'));
+      panel.appendChild(el('div', 'author', '👨‍👦 出品：Jawen & Papa'));
       var menu = el('div', 'menu-list');
       menu.style.margin = '0 auto';
       var g = SG.game;
@@ -720,9 +752,30 @@
       var g = SG.game;
       var panel = el('div', 'panel');
       panel.appendChild(el('h2', 'title', '🎬 录像回放'));
+
+      // 导入分享码 / 分享链接
+      var impRow = el('div', 'opt-row');
+      impRow.appendChild(el('div', 'opt-label', '导入'));
+      var impTa = el('textarea', 'txt');
+      impTa.rows = 2;
+      impTa.placeholder = '粘贴微信收到的分享链接或分享码';
+      impTa.style.flex = '1';
+      impTa.addEventListener('focus', function () { impTa.select(); });
+      impRow.appendChild(impTa);
+      impRow.appendChild(btn('导入', function () {
+        var raw = impTa.value.trim();
+        if (!raw) return;
+        var item = SG.Replay.decode(raw);
+        if (!item) { toast('分享码无法识别，请确认复制完整'); return; }
+        SG.Replay.importItem(item);
+        g.startReplay(item);
+      }, 'primary'));
+      panel.appendChild(impRow);
+      panel.appendChild(el('div', 'tiny', '家人把分享链接/分享码通过微信发给你，粘贴到这里即可观看他的对局。'));
+
       var list = SG.Replay.list();
       if (!list.length) {
-        panel.appendChild(el('div', 'muted-note', '暂无录像。每次对战结束后会自动保存最近 12 场比赛录像。'));
+        panel.appendChild(el('div', 'muted-note', '暂无本地录像。每次对战结束后会自动保存最近 12 场比赛录像。'));
       }
       list.forEach(function (r) {
         var item = el('div', 'replay-item');
@@ -733,6 +786,7 @@
           ' · ' + (r.result || '') + ' · 时长 ' + Math.round(r.duration) + ' 秒'));
         item.appendChild(info);
         item.appendChild(btn('▶ 回放', function () { g.startReplay(r); }, 'small primary'));
+        item.appendChild(btn('📤 分享', function () { UI.openShare(r); }, 'small'));
         item.appendChild(btn('删除', function () {
           if (confirm('删除这条录像？')) { SG.Replay.remove(r.id); UI.refresh_replays(); UI.show('replays'); }
         }, 'small danger'));
@@ -745,6 +799,67 @@
       br.appendChild(btn('返回', function () { UI.show('title'); }));
       panel.appendChild(br);
       s.appendChild(panel);
+    },
+
+    // ================= 分享面板 =================
+    openShare: function (item) {
+      var s = this.screens.share;
+      s.className = 'screen dim';
+      s.innerHTML = '';
+      var link = SG.Replay.shareLink(item);
+      var code = SG.Replay.encode(item);
+      var panel = el('div', 'panel');
+      panel.style.maxWidth = '760px';
+      panel.appendChild(el('h2', 'title', '📤 分享录像 · ' + item.p1.name + ' vs ' + item.p2.name));
+      panel.appendChild(el('div', 'tiny',
+        '三种方式发到微信，任选其一：① 家人扫二维码直接看；② 点开分享链接直接看；③ 复制分享码发过去，家人在「录像回放 → 导入」粘贴观看。'));
+
+      panel.appendChild(el('h3', 'sect', '方式一 · 微信扫码（最方便）'));
+      var qrBox = el('div');
+      qrBox.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;margin:6px 0;';
+      var isLocal = /localhost|127\.0\.0\.1/.test(global.location.hostname);
+      try {
+        if (typeof global.qrcode !== 'function') throw new Error('no qr lib');
+        var qr = global.qrcode(0, 'L');
+        qr.addData(link);
+        qr.make();
+        qrBox.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2 });
+        var qrSvg = qrBox.querySelector('svg');
+        if (qrSvg) { qrSvg.style.width = '180px'; qrSvg.style.height = '180px'; qrSvg.style.background = '#fff'; qrSvg.style.borderRadius = '8px'; }
+        panel.appendChild(qrBox);
+        panel.appendChild(el('div', 'tiny', isLocal
+          ? '⚠ 当前游戏运行在本机（localhost），手机扫码打不开。把游戏部署上线后（如 GitHub Pages），扫码即可直接观看。'
+          : '微信「扫一扫」扫描上方二维码，即可直接观看这场对局。'));
+      } catch (e) {
+        panel.appendChild(el('div', 'opt-hint', '这场对局太长、二维码装不下，请使用下面的分享码方式。'));
+      }
+
+      panel.appendChild(el('h3', 'sect', '方式二 · 分享链接（点开即看）'));
+      var lt = el('textarea', 'txt');
+      lt.rows = 3;
+      lt.readOnly = true;
+      lt.value = link;
+      lt.addEventListener('focus', function () { lt.select(); });
+      panel.appendChild(lt);
+      panel.appendChild(btn('📋 复制链接', function () { copyText(lt); }, 'small primary'));
+
+      panel.appendChild(el('h3', 'sect', '方式三 · 分享码（对方粘贴导入）'));
+      var ct = el('textarea', 'txt');
+      ct.rows = 4;
+      ct.readOnly = true;
+      ct.value = code;
+      ct.addEventListener('focus', function () { ct.select(); });
+      panel.appendChild(ct);
+      panel.appendChild(btn('📋 复制分享码', function () { copyText(ct); }, 'small primary'));
+
+      if (link.length > 20000) {
+        panel.appendChild(el('div', 'opt-hint', '⚠ 这场对局较长、链接偏大，若微信里打不开请改用分享码方式。'));
+      }
+      var br = el('div', 'btn-row');
+      br.appendChild(btn('返回', function () { UI.show('replays'); }));
+      panel.appendChild(br);
+      s.appendChild(panel);
+      this.show('share');
     },
 
     // ================= 设置 =================
@@ -817,6 +932,7 @@
         '· 命中对手/被命中都会积累<b style="color:#ffd34d">蓄力条</b>，按住蓄力键可以快速蓄力（但会被打断）<br>' +
         '· 蓄力条满后按大招键释放<b style="color:#ff9040">武器专属大招</b>，各有奇效：升龙拳/旋风斩/破空突刺/崩地震/烈焰火球/影连击<br>' +
         '· 格挡可减免85%伤害；跳跃中也可以出拳踢腿（跳踢）<br>' +
+        '· 懒人托管：战斗与休闲玩法中按 <kbd>G</kbd> 或在暂停菜单开启「🤖 托管」，由 AI 代打；托管成绩入榜会标注（托管）<br>' +
         '· 通用：<kbd>P</kbd>/<kbd>Esc</kbd> 暂停 · <kbd>M</kbd> 静音<br>' +
         '· 休闲模式：方向键与 WASD 通用' +
         '</div>'));
@@ -887,4 +1003,5 @@
   };
 
   SG.UI = UI;
+  UI.toast = toast;
 })(typeof window !== 'undefined' ? window : globalThis);

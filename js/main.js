@@ -91,7 +91,7 @@
     var w = SG.DATA.weaponById(c.weapon);
     game.moveShow = {
       custom: c, weapon: w, moves: w.moves || [{ name: w.ult.name, desc: w.desc, anim: 'ult-spin', dur: 2 }], mi: 0, mt: 0, seg: -1,
-      fx: [], nums: [], proj: null, shake: 0, flash: 0, dummyHurt: 0
+      fx: [], slashes: [], nums: [], proj: null, shake: 0, flash: 0, dummyHurt: 0
     };
     game.state = 'showcase';
     game.paused = false;
@@ -115,6 +115,19 @@
     for (var i = 0; i < anim.segs.length; i++) if (pr >= anim.segs[i][0]) idx = i;
     if (idx !== ms.seg) {
       ms.seg = idx;
+      // 武器气浪：攻击姿势触发时在身前生成弧光
+      var segPose = anim.segs[idx][1];
+      var atkPoses = ['punchX', 'kickX', 'punchB', 'upper', 'punchW'];
+      if (atkPoses.indexOf(segPose) >= 0) {
+        var arcCol = '#ffe08a';
+        if (ms.weapon.id === 'sword' || ms.weapon.id === 'katana') arcCol = '#bfe3ff';
+        else if (ms.weapon.id === 'staff') arcCol = '#ffb347';
+        else if (ms.weapon.id === 'hammer' || ms.weapon.id === 'mjolnir') arcCol = '#ffd34d';
+        ms.slashes.push({ x: 510, y: 470, ang: -0.5, r: 52 + idx * 6,
+          life: 0.28, max: 0.28, color: arcCol });
+        ms.slashes.push({ x: 510, y: 470, ang: -0.2, r: 44 + idx * 5,
+          life: 0.24, max: 0.24, color: '#ffffff' });
+      }
       anim.segs[idx].slice(2).forEach(function (e) {
         var k = e.split(':')[0], v = e.split(':')[1];
         if (k === 'sfx') SG.Audio.sfx(v);
@@ -144,6 +157,11 @@
       }
     }
     ms.dummyHurt = Math.max(0, ms.dummyHurt - dt);
+    for (var s3 = ms.slashes.length - 1; s3 >= 0; s3--) {
+      ms.slashes[s3].life -= dt * 0.7;
+      ms.slashes[s3].r += 120 * dt;
+      if (ms.slashes[s3].life <= 0) ms.slashes.splice(s3, 1);
+    }
     for (var f = ms.fx.length - 1; f >= 0; f--) {
       var pt = ms.fx[f];
       pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.vy += 700 * dt; pt.life -= dt;
@@ -186,6 +204,22 @@
       ctx.globalAlpha = Math.min(1, p.life * 2.5);
       ctx.fillStyle = p.c;
       ctx.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s);
+      ctx.globalAlpha = 1;
+    });
+    // 武器气浪弧光
+    ms.slashes.forEach(function (sl) {
+      var a2 = Math.max(0, sl.life / sl.max);
+      ctx.save();
+      ctx.translate(sl.x, sl.y);
+      ctx.rotate(sl.ang);
+      ctx.globalAlpha = a2;
+      ctx.strokeStyle = sl.color;
+      ctx.lineWidth = 9 * a2 + 1; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(0, 0, sl.r, -1.2, 1.2); ctx.stroke();
+      ctx.globalAlpha = a2 * 0.4;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 0, sl.r + 10, -0.8, 0.8); ctx.stroke();
+      ctx.restore();
       ctx.globalAlpha = 1;
     });
     var dPose = ms.dummyHurt > 0 ? 'hurt' : 'idle';

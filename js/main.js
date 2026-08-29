@@ -133,8 +133,8 @@
         if (k === 'sfx') SG.Audio.sfx(v);
         else if (k === 'fx:flash') ms.flash = 0.6;
         else if (k === 'fx:shake') ms.shake = 0.25;
-        else if (k === 'fx:spark') ms.fx.push({ x: 760, y: 470, vx: -160, vy: -120, life: 0.5, c: '#ffe08a', s: 4 });
-        else if (k === 'fx:sparkBig') for (var j = 0; j < 10; j++) ms.fx.push({ x: 800, y: 470, vx: -80 - Math.random() * 220, vy: -80 - Math.random() * 220, life: 0.55, c: '#ffb347', s: 5 });
+        else if (k === 'fx:spark') ms.fx.push({ x: 590, y: 470, vx: -160, vy: -120, life: 0.5, c: '#ffe08a', s: 4 });
+        else if (k === 'fx:sparkBig') for (var j = 0; j < 10; j++) ms.fx.push({ x: 605, y: 470, vx: -80 - Math.random() * 220, vy: -80 - Math.random() * 220, life: 0.55, c: '#ffb347', s: 5 });
         else if (k === 'fx:ring') for (var r = 0; r < 12; r++) ms.fx.push({ x: 430, y: 500, vx: Math.cos(r / 12 * 6.28) * 260, vy: Math.sin(r / 12 * 6.28) * 130, life: 0.5, c: '#ff9a4d', s: 4 });
         else if (k === 'fx:quake') for (var q = 0; q < 14; q++) ms.fx.push({ x: 300 + Math.random() * 400, y: 620, vx: (Math.random() - 0.5) * 300, vy: -150 - Math.random() * 250, life: 0.7, c: '#c8a05a', s: 5 });
         else if (k === 'fx:fireball' || k === 'fx:fireballBig') ms.proj = { x: 430, y: 470, r: k === 'fx:fireballBig' ? 22 : 12, hit: k === 'fx:fireballBig' ? 18 : 8 };
@@ -143,16 +143,16 @@
         ms.dummyHurt = 0.4;
         var dv = anim.segs[idx].indexOf('fx:quake') >= 0 ? 30 : 8;
         ms.dmg += dv;
-        ms.nums.push({ x: 880, y: 430, v: dv, life: 0.8 });
+        ms.nums.push({ x: 610, y: 430, v: dv, life: 0.8 });
       }
     }
     if (ms.proj) {
-      ms.proj.x += 520 * dt;
-      if (ms.proj.x > 860) {
+      ms.proj.x += 400 * dt;
+      if (ms.proj.x > 540) {
         ms.dummyHurt = 0.4;
         ms.dmg += ms.proj.hit;
-        ms.nums.push({ x: 880, y: 430, v: ms.proj.hit, life: 0.8 });
-        for (var s2 = 0; s2 < 8; s2++) ms.fx.push({ x: 870, y: 460, vx: (Math.random() - 0.3) * 200, vy: -Math.random() * 200, life: 0.5, c: '#ff9a4d', s: 4 });
+        ms.nums.push({ x: 610, y: 430, v: ms.proj.hit, life: 0.8 });
+        for (var s2 = 0; s2 < 8; s2++) ms.fx.push({ x: 552, y: 460, vx: (Math.random() - 0.3) * 200, vy: -Math.random() * 200, life: 0.5, c: '#ff9a4d', s: 4 });
         ms.proj = null;
       }
     }
@@ -223,7 +223,7 @@
       ctx.globalAlpha = 1;
     });
     var dPose = ms.dummyHurt > 0 ? 'hurt' : 'idle';
-    SG.Stick.draw(ctx, { x: 880, y: 620, facing: -1, pose: dPose, t: 0.6,
+    SG.Stick.draw(ctx, { x: 560, y: 620, facing: -1, pose: dPose, t: 0.6,
       custom: { color: 'black', hair: 'none', hat: 'none', clothes: 'none', weapon: 'fist', gear: 'none', name: '' } });
     ms.nums.forEach(function (n) {
       ctx.globalAlpha = Math.min(1, n.life * 2);

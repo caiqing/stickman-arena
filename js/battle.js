@@ -846,8 +846,9 @@
           ctx.textAlign = dir > 0 ? 'left' : 'right';
           ctx.fillText('✦ 大招就绪 ' + f.weapon.ult.name, dir > 0 ? mx + mw + 8 : mx - 8, my + 10);
         }
-        // 回合星
-        for (var i = 0; i < self.roundsToWin; i++) {
+        // 回合星（修炼等无限回合模式限制显示数量，避免每帧上万次绘制）
+        var starMax = Math.min(self.roundsToWin, 3);
+        for (var i = 0; i < starMax; i++) {
           var px = dir > 0 ? bx + i * 26 + 8 : bx + bw - i * 26 - 8;
           ctx.beginPath(); ctx.arc(px, 104, 7, 0, 7);
           ctx.fillStyle = i < f.roundsWon ? '#ffd34d' : 'rgba(255,255,255,0.2)';
@@ -868,10 +869,12 @@
       var tsec = Math.ceil(this.timer);
       ctx.font = 'bold 40px system-ui, sans-serif';
       ctx.fillStyle = tsec <= 10 ? '#ff7043' : '#fff';
-      ctx.fillText(tsec, W / 2, 60);
+      ctx.fillText(this.mode === 'training' ? '∞' : tsec, W / 2, 60);
       ctx.font = '12px system-ui, sans-serif';
       ctx.fillStyle = '#9fb0d8';
-      ctx.fillText(this.mode === 'story' ? '第 ' + this.round + ' 战' : 'Round ' + this.round + ' · Bo' + (this.roundsToWin * 2 - 1), W / 2, 76);
+      ctx.fillText(this.mode === 'training' ? '修炼模式'
+        : this.mode === 'story' ? '第 ' + this.round + ' 战'
+        : 'Round ' + this.round + ' · Bo' + (this.roundsToWin * 2 - 1), W / 2, 76);
 
       // 连击
       var c1 = this.combo.p1, c2 = this.combo.p2;

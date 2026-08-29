@@ -98,6 +98,7 @@
     var wrap = el('div');
     wrap.appendChild(row); wrap.appendChild(hint);
     wrap.refresh = refresh;
+    refresh();   // 初始渲染：加载当前配置值
     return wrap;
   }
 
@@ -214,7 +215,7 @@
       var wrap = el('div', 'custom-wrap');
       // 预览
       var prevBox = el('div', 'preview-box');
-      var cv = el('canvas'); cv.width = 260; cv.height = 340;
+      var cv = el('canvas'); cv.width = 200; cv.height = 260;
       prevBox.appendChild(cv);
       var pname = el('div', 'preview-name');
       prevBox.appendChild(pname);
@@ -290,7 +291,7 @@
       var petBtns = [];
       petOpts.forEach(function (p) {
         var d = el('div', 'color-dot');
-        d.style.cssText = 'width:42px;height:42px;font-size:22px;display:flex;align-items:center;justify-content:center;';
+        d.style.cssText = 'width:34px;height:34px;font-size:18px;display:flex;align-items:center;justify-content:center;';
         d.textContent = p.id === '' ? '🚫' : (petIcons[p.id] || '?');
         d.title = p.name;
         if ((custom.pet || '') === p.id) d.classList.add('sel');
@@ -317,7 +318,7 @@
         items.forEach(function (it) {
           var owned = it.id === '' || (SG.game.hasItem && SG.game.hasItem(it.id));
           var d = el('div', 'color-dot');
-          d.style.cssText = 'width:42px;height:42px;font-size:20px;display:flex;align-items:center;justify-content:center;';
+          d.style.cssText = 'width:34px;height:34px;font-size:17px;display:flex;align-items:center;justify-content:center;';
           d.textContent = it.icon || '?';
           d.title = owned ? (it.name || '无') + (it.how ? '：' + it.how : '') : (it.name || '') + '（未拥有，请先在商城购买）';
           if ((custom[fieldName] || '') === it.id) d.classList.add('sel');
@@ -415,7 +416,7 @@
       var g = SG.game;
       var panel = el('div', 'panel');
       panel.appendChild(el('h2', 'title', '📖 故事模式 · 暗影危机'));
-      panel.appendChild(el('div', 'tiny', '暗影军团入侵墨水大陆，夺走圣火令。闯过六关，击败暗影武帝，夺回圣火令，加冕武林盟主！'));
+      panel.appendChild(el('div', 'tiny', '闯过六关，击败暗影武帝，夺回圣火令，加冕武林盟主！'));
       var heroRow = el('div', 'pslot');
       var heroCv = el('canvas'); heroCv.width = 64; heroCv.height = 84;
       heroRow.appendChild(heroCv);
@@ -446,14 +447,16 @@
         var cleared = g.storyProgress >= lv.id;
         var open = g.storyProgress >= lv.id - 1;
         var node = el('div', 'story-node' + (open ? '' : ' locked') + (cleared ? ' done' : ''));
-        node.appendChild(el('div', 'num', open ? lv.id : '🔒'));
+        var head = el('div', 'story-head');
+        head.appendChild(el('div', 'num', open ? lv.id : '🔒'));
+        var stars = g.storyStars[lv.id] || 0;
+        head.appendChild(el('div', 'stars', cleared ? '★★★'.slice(0, stars) + '☆☆☆'.slice(0, 3 - stars) : (open ? '可挑战' : '')));
+        node.appendChild(head);
         var info = el('div', 'info');
         info.appendChild(el('div', 'nm', lv.name));
-        info.appendChild(el('div', 'boss', '⚔ BOSS：' + lv.boss.name + (lv.finalBoss ? '（最终BOSS）' : '')));
+        info.appendChild(el('div', 'boss', '⚔ ' + lv.boss.name + (lv.finalBoss ? '（最终BOSS）' : '')));
         info.appendChild(el('div', 'desc', lv.desc));
         node.appendChild(info);
-        var stars = g.storyStars[lv.id] || 0;
-        node.appendChild(el('div', 'stars', cleared ? '★★★'.slice(0, stars) + '☆☆☆'.slice(0, 3 - stars) : (open ? '可挑战' : '')));
         if (open) node.appendChild(btn(cleared ? '再战' : '出发', function () { g.startStoryLevel(lv.id); }, 'small primary'));
         map.appendChild(node);
       });
@@ -1317,11 +1320,13 @@
       var g = SG.game;
       var panel = el('div', 'panel');
       panel.appendChild(el('h2', 'title', '🛒 武林商城'));
-      panel.appendChild(el('div', 'tiny', '赢取金币，购买强力挂件与超级装备！金币来源：故事通关、对战获胜、大会名次。'));
 
       var coinRow = el('div', 'opt-row');
       coinRow.appendChild(el('div', 'opt-label', '金币'));
       coinRow.appendChild(el('div', 'pname', '🪙 ' + g.coins));
+      var coinTip = el('div', 'tiny', '来源：故事通关 · 对战获胜 · 大会名次');
+      coinTip.style.margin = '0 0 0 auto';
+      coinRow.appendChild(coinTip);
       panel.appendChild(coinRow);
 
       var grid = el('div', 'shop-grid');
@@ -1340,7 +1345,7 @@
         if (item.requires && !g.hasItem(item.requires)) {
           card.appendChild(el('div', 'shop-req', '🔒 需先购买前置'));
         } else if (owned) {
-          card.appendChild(el('div', 'shop-owned', '✔ 已拥有 · 装备：选人界面对应栏目'));
+          card.appendChild(el('div', 'shop-owned', '✔ 已拥有 · 选人界面装备'));
         } else {
           card.appendChild(el('div', 'shop-price', '🪙 ' + item.price));
           var buyBtn = btn('购买', function () {
@@ -1489,7 +1494,7 @@
       panel.appendChild(cols);
       panel.appendChild(el('div', '',
         '<h3 class="sect">战斗规则</h3>' +
-        '<div class="tiny" style="line-height:2">' +
+        '<div class="tiny" style="line-height:1.7">' +
         '· 3局2胜制，每回合60秒，时间到按血量百分比判胜<br>' +
         '· 命中对手/被命中都会积累<b style="color:#ffd34d">蓄力条</b>，按住蓄力键可以快速蓄力（但会被打断）<br>' +
         '· 蓄力条满后按大招键释放<b style="color:#ff9040">武器专属大招</b>，各有奇效：升龙拳/旋风斩/破空突刺/崩地震/烈焰火球/影连击<br>' +

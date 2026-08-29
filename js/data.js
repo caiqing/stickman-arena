@@ -52,24 +52,55 @@
   ];
 
   // ---------- 武器（决定攻击段数/伤害/速度 与 大招技能） ----------
+  // moves 为招式演示场的表演脚本：name 名称 / desc 招数说明 / anim 动作脚本 / dur 时长
   var WEAPONS = [
     { id: 'fist',    name: '赤手拳法', dmg: 1.0,  spd: 1.15, range: 1.0,
       desc: '空手迅捷，连击流畅', ult: { name: '升龙拳', type: 'upper', dmg: 30 },
+      moves: [
+        { name: '疾风连拳', desc: '三段直拳连环出击，快得看不清影子', anim: 'punch', dur: 1.6 },
+        { name: '无影腿', desc: '低身高段两连踢，破防利器', anim: 'kick', dur: 1.6 },
+        { name: '升龙拳', desc: '终极奥义：腾空螺旋上击，把对手送上天', anim: 'ult-upper', dur: 2.2 }
+      ],
       locked: 0 },
     { id: 'sword',   name: '青锋铁剑', dmg: 1.1,  spd: 1.0,  range: 1.15,
       desc: '攻守均衡的武林正道', ult: { name: '旋风斩', type: 'spin', dmg: 36 },
+      moves: [
+        { name: '拨云见日', desc: '自下而上的撩剑，剑锋如月', anim: 'slash', dur: 1.6 },
+        { name: '流星赶月', desc: '突进直刺，一剑封喉', anim: 'thrust', dur: 1.6 },
+        { name: '旋风斩', desc: '终极奥义：原地旋风三连斩，剑气护体', anim: 'ult-spin', dur: 2.2 }
+      ],
       locked: 1 },
     { id: 'spear',   name: '红缨长枪', dmg: 1.05, spd: 0.9,  range: 1.4,
       desc: '一寸长一寸强', ult: { name: '破空突刺', type: 'dash', dmg: 32 },
+      moves: [
+        { name: '毒龙出洞', desc: '枪出如龙，直取中线', anim: 'thrust', dur: 1.6 },
+        { name: '横扫千军', desc: '枪杆横扫，大范围压制', anim: 'sweep', dur: 1.6 },
+        { name: '破空突刺', desc: '终极奥义：人枪合一，破空三百里', anim: 'ult-dash', dur: 2.2 }
+      ],
       locked: 2 },
     { id: 'hammer',  name: '崩山战锤', dmg: 1.4,  spd: 0.72, range: 1.1,
       desc: '力劈华山，一锤定音', ult: { name: '崩地震', type: 'quake', dmg: 34 },
+      moves: [
+        { name: '力劈华山', desc: '过头重劈，势大力沉', anim: 'slam', dur: 1.6 },
+        { name: '抡锤横扫', desc: '抡圆了扫，近身者退', anim: 'sweep', dur: 1.6 },
+        { name: '崩地震', desc: '终极奥义：砸地引震，波及全场', anim: 'ult-quake', dur: 2.2 }
+      ],
       locked: 3 },
     { id: 'staff',   name: '烈焰法杖', dmg: 0.95, spd: 1.0,  range: 1.2,
       desc: '远程施法，火球灼敌', ult: { name: '烈焰火球', type: 'fire', dmg: 30 },
+      moves: [
+        { name: '火花弹', desc: '指尖火花，远程骚扰', anim: 'fire-small', dur: 1.6 },
+        { name: '烈焰护体', desc: '周身火环，近身者退', anim: 'ring', dur: 1.6 },
+        { name: '烈焰火球', desc: '终极奥义：滚滚火球，焚尽对手', anim: 'ult-fire', dur: 2.2 }
+      ],
       locked: 4 },
     { id: 'nunchaku', name: '影风双截棍', dmg: 0.9, spd: 1.35, range: 1.05,
       desc: '快如闪电，密不透风', ult: { name: '影连击', type: 'rush', dmg: 33 },
+      moves: [
+        { name: '玉带缠腰', desc: '双截棍腰间快打，密不透风', anim: 'punch', dur: 1.5 },
+        { name: '拨草寻蛇', desc: '低扫接上挑，防不胜防', anim: 'kick', dur: 1.5 },
+        { name: '影连击', desc: '终极奥义：瞬身影袭，七步之内最快', anim: 'ult-rush', dur: 2.2 }
+      ],
       locked: 5 }
   ];
 

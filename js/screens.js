@@ -20,6 +20,18 @@
   }
   function unlocked(item) { return !item.locked || (SG.game.storyProgress || 0) >= item.locked; }
 
+  // 场景缩略图：借用战斗场景绘制器离屏渲染
+  function stageThumbCv(stageId, w, h) {
+    var cv = el('canvas'); cv.width = w; cv.height = h;
+    try {
+      var b = new SG.Battle({ mode: 'versus', stage: stageId, roundsToWin: 9, roundTime: 9, silent: true,
+        p1: { name: 'a', custom: SG.DATA.defaultCustom(), ctrl: 'human' },
+        p2: { name: 'b', custom: SG.DATA.defaultCustom(), ctrl: 'human' }, onEvent: function () {} });
+      b.drawStage(cv.getContext('2d'));
+    } catch (e) {}
+    return cv;
+  }
+
   // 轻提示
   var toastTimer = null;
   function toast(msg) {
@@ -94,7 +106,7 @@
 
     init: function (root) {
       this.root = root;
-      var names = ['title', 'roster', 'picker', 'custom', 'storyMap', 'dialogue', 'versusSetup',
+      var names = ['title', 'roster', 'picker', 'stageDesigner', 'custom', 'storyMap', 'dialogue', 'versusSetup',
         'tournamentSetup', 'bracket', 'casualHub', 'leaderboard', 'replays', 'share',
         'settings', 'help', 'result', 'pause'];
       var self = this;
@@ -475,9 +487,31 @@
       var panel = el('div', 'panel');
       panel.appendChild(el('h2', 'title', '⚔️ 双人对战'));
 
-      var grid = el('div', 'grid cols2');
+      // 双方列：角色卡 + 操控方式（一一对应网格）
+      var vsGrid = el('div', 'grid cols2 vs-grid');
+      var sides = [
+        { key: 'p1', baseName: g.versus.p1.name, nmEl: null, btns: [],
+          opts: [['human', '🙋 真人'], ['auto', '🤖 AI托管']],
+          get: function () { return g.versus.p1auto ? 'auto' : 'human'; },
+          set: function (v) { g.versus.p1auto = v === 'auto'; } },
+        { key: 'p2', baseName: g.versus.p2.name, nmEl: null, btns: [],
+          opts: [['human', '🙋 真人'], ['cpu', '🤖 电脑']],
+          get: function () { return g.versus.p2cpu ? 'cpu' : 'human'; },
+          set: function (v) { g.versus.p2cpu = v === 'cpu'; } }
+      ];
+      var diffBtns = [];
+      function hasAI() { return g.versus.p1auto || g.versus.p2cpu; }
+      function syncCtrlUI() {
+        sides.forEach(function (sd) {
+          sd.btns.forEach(function (b) { b.classList.toggle('primary', b.dataset.v === sd.get()); });
+          if (sd.nmEl) sd.nmEl.textContent = sd.baseName + ((sd.key === 'p1' && g.versus.p1auto) || (sd.key === 'p2' && g.versus.p2cpu) ? ' 🤖' : '');
+        });
+        diffBtns.forEach(function (x) { x.disabled = !hasAI(); });   // 双方都真人时难度无意义，置灰
+      }
       ['p1', 'p2'].forEach(function (side, i) {
         var v = g.versus[side];
+        var sd = sides[i];
+        var cell = el('div', 'vs-col');
         var box = el('div', 'pslot');
         var cv = el('canvas'); cv.width = 64; cv.height = 84;
         box.appendChild(cv);
@@ -488,23 +522,45 @@
         box.appendChild(info);
         var btns = el('div', 'pbtns');
         btns.appendChild(btn('选角色', function () {
-          UI.openCustom({
-            title: (i === 0 ? '玩家1' : '玩家2') + '造型', custom: v.custom, name: v.name,
-            onDone: function (c) {
-              v.name = c.name || v.name; v.custom = c;
+          UI.openRosterPicker({
+            title: (i === 0 ? '玩家1' : '玩家2') + ' · 从角色库选择',
+            returnScreen: 'versusSetup',
+            onPick: function (c) {
+              v.custom = JSON.parse(JSON.stringify(c));
+              if (c.name) v.name = c.name;
+              sd.baseName = v.name;
               UI.refresh_versusSetup(); UI.show('versusSetup');
-            },
-            allowCancel: function () { UI.refresh_versusSetup(); UI.show('versusSetup'); }
+            }
           });
         }, 'small'));
         btns.appendChild(btn('随机', function () {
           var r = SG.DATA.randomCustom(true);
           Object.assign(v.custom, r);
+          if (r.name) v.name = r.name;
+          sd.baseName = v.name;
           SG.Audio.sfx('unlock');
           UI.refresh_versusSetup(); UI.show('versusSetup');
         }, 'small'));
         box.appendChild(btns);
-        grid.appendChild(box);
+        cell.appendChild(box);
+        // 操控子面板
+        var ctrl = el('div', 'vs-ctrl');
+        ctrl.appendChild(el('div', 'vs-ctrl-label', '操控'));
+        var crow = el('div', 'vrow2');
+        sd.opts.forEach(function (o) {
+          var b = btn(o[1], function () {
+            sd.set(o[0]);
+            SG.Audio.sfx('click');
+            syncCtrlUI();
+          }, 'small');
+          b.dataset.v = o[0];
+          sd.btns.push(b);
+          crow.appendChild(b);
+        });
+        ctrl.appendChild(crow);
+        cell.appendChild(ctrl);
+        vsGrid.appendChild(cell);
+        sd.nmEl = nm;
         box.refresh = function () {
           var badge = (i === 0 && g.versus.p1auto) || (i === 1 && g.versus.p2cpu) ? ' 🤖' : '';
           nm.textContent = v.name + badge;
@@ -514,46 +570,9 @@
         };
         box.refresh();
       });
-      panel.appendChild(grid);
+      panel.appendChild(vsGrid);
 
-      // 双方操控方式（真人 / AI）+ AI 难度（任何一方选 AI 时可选）
-      var sides = [
-        { key: 'p1', label: '玩家1 操控', baseName: g.versus.p1.name, nmEl: null,
-          opts: [['human', '🙋 真人'], ['auto', '🤖 AI托管']],
-          get: function () { return g.versus.p1auto ? 'auto' : 'human'; },
-          set: function (v) { g.versus.p1auto = v === 'auto'; } },
-        { key: 'p2', label: '玩家2 操控', baseName: g.versus.p2.name, nmEl: null,
-          opts: [['human', '🙋 真人'], ['cpu', '🤖 电脑']],
-          get: function () { return g.versus.p2cpu ? 'cpu' : 'human'; },
-          set: function (v) { g.versus.p2cpu = v === 'cpu'; } }
-      ];
-      var diffBtns = [];
-      function hasAI() { return g.versus.p1auto || g.versus.p2cpu; }
-      function syncCtrlUI() {
-        var names = [...document.querySelectorAll('#screen-versusSetup.active .grid .pname')];
-        sides.forEach(function (sd, idx) {
-          sd.btns.forEach(function (b) { b.classList.toggle('primary', b.dataset.v === sd.get()); });
-          if (sd.nmEl === null) sd.nmEl = names[idx] || null;
-          if (sd.nmEl) sd.nmEl.textContent = sd.baseName + ((sd.key === 'p1' && g.versus.p1auto) || (sd.key === 'p2' && g.versus.p2cpu) ? ' 🤖' : '');
-        });
-        diffBtns.forEach(function (x) { x.disabled = !hasAI(); });   // 双方都真人时难度无意义，置灰
-      }
-      sides.forEach(function (sd) {
-        var row = el('div', 'opt-row');
-        row.appendChild(el('div', 'opt-label', sd.label));
-        sd.btns = [];
-        sd.opts.forEach(function (o) {
-          var b = btn(o[1], function () {
-            sd.set(o[0]);
-            SG.Audio.sfx('click');
-            syncCtrlUI();
-          }, 'small');
-          b.dataset.v = o[0];
-          sd.btns.push(b);
-          row.appendChild(b);
-        });
-        panel.appendChild(row);
-      });
+      // AI 难度
       var diffRow = el('div', 'opt-row');
       diffRow.appendChild(el('div', 'opt-label', 'AI 难度'));
       ['简单', '普通', '困难'].forEach(function (d, i) {
@@ -568,6 +587,17 @@
       });
       panel.appendChild(diffRow);
       syncCtrlUI();
+
+      // 场景选择（6 大故事场景 + 自定义场景 + 设计新场景 + 随机）
+      var stageRow = el('div', 'opt-row');
+      stageRow.appendChild(el('div', 'opt-label', '场景'));
+      stageRow.appendChild(UI.buildStagePicker(
+        g.versus.stage || 'random',
+        function (id) { g.versus.stage = id; UI.refresh_versusSetup(); UI.show('versusSetup'); },
+        'versusSetup'
+      ));
+      panel.appendChild(stageRow);
+
       panel.appendChild(el('div', 'tiny', 'P1：A/D移动 W跳 S格挡 J拳 K腿 I冲刺 L蓄力 U大招 ｜ P2：方向键 + 数字键盘1拳2腿3冲刺0蓄力回车大招（无小键盘可用 , . / ; \' ）｜ 双方可各自选 AI：人机混战，或托管看 AI 表演赛'));
 
       var br = el('div', 'btn-row');
@@ -633,6 +663,16 @@
       });
       panel.appendChild(cntRow);
       panel.appendChild(list);
+
+      // 大会场景选择（全部场次通用）
+      var stageRow = el('div', 'opt-row');
+      stageRow.appendChild(el('div', 'opt-label', '大会场景'));
+      stageRow.appendChild(UI.buildStagePicker(
+        g.tournament.stage || 'random',
+        function (id) { g.tournament.stage = id; UI.refresh_tournamentSetup(); UI.show('tournamentSetup'); },
+        'tournamentSetup'
+      ));
+      panel.appendChild(stageRow);
 
       var br = el('div', 'btn-row');
       br.appendChild(btn('🔥 开始大会', function () { g.beginTournament(); }, 'primary'));
@@ -925,14 +965,14 @@
             onDone: function (c) {
               item.name = c.name || item.name;
               item.custom = JSON.parse(JSON.stringify(c));
-              game.rosterSave(item);
+              SG.game.rosterSave(item);
               UI.show('roster');
             }
           });
         }, 'vs'));
         ops.appendChild(btn('🎬 演示', function () {
           UI._lastCustomCfg = null;
-          game.startUltDemo(item.custom);
+          SG.game.startUltDemo(item.custom);
         }, 'vs'));
         ops.appendChild(btn('⭐ 主角', function () {
           g.profile.storyCustom = JSON.parse(JSON.stringify(item.custom));
@@ -940,7 +980,7 @@
           if (SG.UI.toast) SG.UI.toast('已设为故事模式主角');
         }, 'vs'));
         ops.appendChild(btn('🗑', function () {
-          if (confirm('删除角色「' + item.name + '」？')) { game.rosterDelete(item.id); UI.refresh_roster(); UI.show('roster'); }
+          if (confirm('删除角色「' + item.name + '」？')) { SG.game.rosterDelete(item.id); UI.refresh_roster(); UI.show('roster'); }
         }, 'vs danger'));
         card.appendChild(ops);
         grid.appendChild(card);
@@ -953,7 +993,7 @@
         UI.openCustom({
           title: '新建角色', custom: SG.DATA.defaultCustom(), name: '', returnScreen: 'roster',
           onDone: function (c) {
-            game.rosterSave({ name: c.name || '新角色', custom: JSON.parse(JSON.stringify(c)) });
+            SG.game.rosterSave({ name: c.name || '新角色', custom: JSON.parse(JSON.stringify(c)) });
             UI.show('roster');
           }
         });
@@ -993,6 +1033,145 @@
       panel.appendChild(br);
       s.appendChild(panel);
       this.show('picker');
+    },
+
+    // ================= 场景选择器 / 场景设计器 =================
+    buildStagePicker: function (selId, onPick, returnScreen) {
+      var g = SG.game;
+      var wrap = el('div', 'stage-pick');
+      function card(id, nm, thumb, deletable) {
+        var c = el('div', 'stage-card' + (selId === id ? ' sel' : ''));
+        if (thumb) c.appendChild(thumb);
+        else c.appendChild(el('div', 'stage-rand', '🎲'));
+        c.appendChild(el('div', 'stage-nm', nm));
+        if (deletable) {
+          var x = el('div', 'stage-del', '✕');
+          x.title = '删除该场景';
+          x.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (confirm('删除场景「' + nm + '」？')) {
+              g.removeCustomStage(id);
+              if (selId === id) onPick('random');
+              UI.show(returnScreen);
+            }
+          });
+          c.appendChild(x);
+        }
+        c.addEventListener('click', function () { SG.Audio.sfx('click'); onPick(id); });
+        return c;
+      }
+      wrap.appendChild(card('random', '🎲 随机'));
+      SG.DATA.STAGES.forEach(function (st) {
+        wrap.appendChild(card(st.id, st.name, stageThumbCv(st.id, 116, 64), !!st.custom));
+      });
+      var add = el('div', 'stage-card stage-add');
+      add.innerHTML = '🎨<br>设计新场景';
+      add.addEventListener('click', function () {
+        UI.openStageDesigner({
+          returnScreen: returnScreen,
+          onDone: function (st) { g.addCustomStage(st); UI.show(returnScreen); }
+        });
+      });
+      wrap.appendChild(add);
+      return wrap;
+    },
+
+    openStageDesigner: function (cfg) {
+      var s = this.screens.stageDesigner;
+      s.className = 'screen dim';
+      s.innerHTML = '';
+      var st = { id: 'c' + Date.now().toString(36), name: '我的场景',
+        sky: ['#2b3358', '#151a2e'], ground: '#4a3b2a', deco: 'dojo', custom: true };
+      var panel = el('div', 'panel');
+      panel.appendChild(el('h2', 'title', '🎨 设计新场景'));
+      panel.appendChild(el('div', 'tiny', '给场景起个响亮的名字，搭配天空与地面颜色，选一种装饰主题，保存后即可在对战与大会中选用。'));
+
+      var nrow = el('div', 'opt-row');
+      nrow.appendChild(el('div', 'opt-label', '名称'));
+      var nameIn = el('input', 'txt');
+      nameIn.value = st.name; nameIn.maxLength = 6;
+      nameIn.addEventListener('input', function () { st.name = nameIn.value; draw(); });
+      nrow.appendChild(nameIn);
+      panel.appendChild(nrow);
+
+      var PAL = ['#2b3358', '#151a2e', '#c9863f', '#5a3418', '#7fa8d8', '#2a3c58',
+                 '#4a1414', '#1a0a0a', '#2a1a4a', '#0d0a1a', '#2e5d46', '#12241c',
+                 '#7ec8e8', '#123456', '#3a2f22', '#241a38'];
+      function colorRow(label, get, set) {
+        var row = el('div', 'opt-row');
+        row.appendChild(el('div', 'opt-label', label));
+        var dots = el('div', 'color-dots');
+        PAL.forEach(function (c) {
+          var d = el('div', 'color-dot' + (get() === c ? ' sel' : ''));
+          d.style.background = c;
+          d.addEventListener('click', function () {
+            set(c);
+            [...dots.children].forEach(function (x) { x.classList.remove('sel'); });
+            d.classList.add('sel');
+            draw();
+          });
+          dots.appendChild(d);
+        });
+        row.appendChild(dots);
+        return row;
+      }
+      panel.appendChild(colorRow('天空 · 上', function () { return st.sky[0]; }, function (c) { st.sky[0] = c; }));
+      panel.appendChild(colorRow('天空 · 下', function () { return st.sky[1]; }, function (c) { st.sky[1] = c; }));
+      panel.appendChild(colorRow('地面颜色', function () { return st.ground; }, function (c) { st.ground = c; }));
+
+      var drow = el('div', 'opt-row');
+      drow.appendChild(el('div', 'opt-label', '装饰'));
+      var decoBtns = [];
+      [['dojo', '🏮 灯笼'], ['bamboo', '🎋 竹林'], ['desert', '🏜 沙丘'],
+       ['snow', '🏔 雪峰'], ['volcano', '🌋 火山'], ['castle', '🏰 王城']].forEach(function (p) {
+        var b = btn(p[1], function () {
+          st.deco = p[0];
+          decoBtns.forEach(function (x) { x.classList.remove('primary'); });
+          b.classList.add('primary');
+          SG.Audio.sfx('click');
+          draw();
+        }, 'small');
+        if (st.deco === p[0]) b.classList.add('primary');
+        decoBtns.push(b);
+        drow.appendChild(b);
+      });
+      panel.appendChild(drow);
+
+      var prevWrap = el('div');
+      prevWrap.style.cssText = 'display:flex;justify-content:center;margin:10px 0;';
+      var prev = el('canvas'); prev.width = 480; prev.height = 270;
+      prev.style.cssText = 'width:480px;max-width:100%;border-radius:10px;border:1px solid #3a4266;';
+      prevWrap.appendChild(prev);
+      panel.appendChild(prevWrap);
+
+      function draw() {
+        try {
+          var tmp = { id: st.id, name: st.name, sky: st.sky.slice(), ground: st.ground, deco: st.deco };
+          var b = new SG.Battle({ mode: 'versus', stage: 'dojo', roundsToWin: 9, roundTime: 9, silent: true,
+            p1: { name: 'a', custom: SG.DATA.defaultCustom(), ctrl: 'human' },
+            p2: { name: 'b', custom: SG.DATA.defaultCustom(), ctrl: 'human' }, onEvent: function () {} });
+          b.stage = tmp;
+          b.bamboos = [];
+          if (tmp.deco === 'bamboo') {
+            var seed = 999;
+            var rr = function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t2 = Math.imul(seed ^ seed >>> 15, 1 | seed); t2 = t2 + Math.imul(t2 ^ t2 >>> 7, 61 | t2) ^ t2; return ((t2 ^ t2 >>> 14) >>> 0) / 4294967296; };
+            for (var i = 0; i < 18; i++) b.bamboos.push({ x: rr() * 1280, w: 14 + rr() * 12, shade: rr() });
+          }
+          b.drawStage(prev.getContext('2d'));
+        } catch (e) {}
+      }
+      draw();
+
+      var br = el('div', 'btn-row');
+      br.appendChild(btn('💾 保存场景', function () {
+        st.name = (st.name || '').trim() || '我的场景';
+        SG.Audio.sfx('unlock');
+        cfg.onDone(st);
+      }, 'primary'));
+      br.appendChild(btn('返回', function () { UI.show(cfg.returnScreen || 'title'); }));
+      panel.appendChild(br);
+      s.appendChild(panel);
+      this.show('stageDesigner');
     },
 
     // ================= 设置 =================

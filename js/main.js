@@ -29,8 +29,8 @@
     storyStars: loadJSON('sga_stars', {}),
     settings: loadJSON('sga_settings', null),
 
-    versus: { p1: makeVersusSlot('玩家1'), p2: makeVersusSlot('玩家2'), p1auto: false, p2cpu: false, difficulty: 1 },
-    tournament: { players: [], rounds: [], champion: null, third: [], curIdx: 0 },
+    versus: { p1: makeVersusSlot('玩家1'), p2: makeVersusSlot('玩家2'), p1auto: false, p2cpu: false, difficulty: 1, stage: 'random' },
+    tournament: { players: [], rounds: [], champion: null, third: [], curIdx: 0, stage: 'random' },
     casual: null,
     battle: null,
     battleMeta: null,
@@ -68,6 +68,175 @@
     return game.autoPilot;
   };
 
+  // ---------- 招式演示场：循环演示角色全套招式（名称/动效/音效/说明） ----------
+  var SHOW_ANIMS = {
+    'punch':    { segs: [[0, 'punchW'], [0.22, 'punchW'], [0.38, 'punchX', 'sfx:punch', 'fx:spark'], [0.55, 'punchW'], [0.68, 'punchX', 'sfx:hit', 'fx:spark'], [0.82, 'punchW'], [1.01, 'punchX', 'sfx:hitHeavy', 'fx:sparkBig', 'fx:shake']] },
+    'kick':     { segs: [[0, 'kickW'], [0.25, 'kickW'], [0.45, 'kickX', 'sfx:punch'], [0.6, 'kickW'], [0.78, 'kickX', 'sfx:hitHeavy', 'fx:sparkBig', 'fx:shake'], [1.01, 'kickW']] },
+    'slash':    { segs: [[0, 'punchW'], [0.3, 'punchW'], [0.45, 'punchX', 'sfx:punch', 'fx:spark'], [0.62, 'kickW'], [0.78, 'kickX', 'sfx:hit', 'fx:shake'], [1.01, 'punchW']] },
+    'thrust':   { segs: [[0, 'punchW'], [0.35, 'punchW'], [0.5, 'punchX', 'sfx:punch', 'fx:sparkBig'], [0.72, 'punchX'], [1.01, 'punchW']] },
+    'sweep':    { segs: [[0, 'kickW'], [0.3, 'kickW'], [0.5, 'kickX', 'sfx:hitHeavy', 'fx:sparkBig', 'fx:shake'], [0.75, 'kickW'], [1.01, 'kickX', 'sfx:hit']] },
+    'slam':     { segs: [[0, 'ult'], [0.3, 'ult'], [0.5, 'kickX', 'sfx:hitHeavy', 'fx:quake', 'fx:shake'], [0.8, 'block'], [1.01, 'idle']] },
+    'ring':     { segs: [[0, 'charge', 'sfx:chargeTick'], [0.4, 'block', 'sfx:block', 'fx:ring'], [0.7, 'charge', 'sfx:chargeTick'], [1.01, 'block', 'fx:ring']] },
+    'fire-small': { segs: [[0, 'charge', 'sfx:chargeTick'], [0.4, 'punchX', 'sfx:fire', 'fx:fireball', 'fx:spark'], [0.75, 'charge'], [1.01, 'punchX', 'sfx:fire', 'fx:fireball']] },
+    'ult-upper':  { segs: [[0, 'charge', 'sfx:chargeTick'], [0.25, 'charge'], [0.3, 'ult', 'sfx:ult', 'fx:flash', 'fx:shake'], [0.55, 'jump'], [0.8, 'fall'], [1.01, 'idle']] },
+    'ult-spin':   { segs: [[0, 'charge', 'sfx:chargeTick'], [0.18, 'charge'], [0.25, 'ult', 'sfx:ult', 'fx:flash'], [0.45, 'ult', 'fx:ring', 'fx:shake'], [0.65, 'ult', 'fx:ring'], [0.85, 'ult', 'fx:ring', 'fx:shake'], [1.01, 'idle']] },
+    'ult-dash':   { segs: [[0, 'charge', 'sfx:chargeTick'], [0.2, 'charge'], [0.25, 'dash', 'sfx:dash'], [0.55, 'punchX', 'sfx:hitHeavy', 'fx:quake', 'fx:shake'], [0.8, 'idle'], [1.01, 'idle']] },
+    'ult-quake':  { segs: [[0, 'jump'], [0.3, 'jump'], [0.45, 'kickX', 'sfx:ult', 'fx:quake', 'fx:shake', 'fx:flash'], [0.8, 'idle'], [1.01, 'idle']] },
+    'ult-fire':   { segs: [[0, 'charge', 'sfx:chargeTick'], [0.35, 'charge'], [0.5, 'punchX', 'sfx:ult', 'fx:fireballBig', 'fx:flash'], [1.01, 'charge']] },
+    'ult-rush':   { segs: [[0, 'idle'], [0.2, 'idle', 'sfx:dash', 'fx:flash'], [0.3, 'punchX', 'sfx:hit'], [0.45, 'punchX', 'sfx:hit'], [0.6, 'punchX', 'sfx:hitHeavy', 'fx:sparkBig'], [0.8, 'victory'], [1.01, 'idle']] }
+  };
+
+  game.startMoveShow = function (custom) {
+    var c = cloneCustom(custom);
+    var w = SG.DATA.weaponById(c.weapon);
+    game.moveShow = {
+      custom: c, weapon: w, moves: w.moves || [{ name: w.ult.name, desc: w.desc, anim: 'ult-spin', dur: 2 }], mi: 0, mt: 0, seg: -1,
+      fx: [], nums: [], proj: null, shake: 0, flash: 0, dummyHurt: 0
+    };
+    game.state = 'showcase';
+    game.paused = false;
+    hideUI();
+    SG.Audio.music('menu');
+  };
+  game.stopMoveShow = function () {
+    game.moveShow = null;
+    game.state = 'menu';
+    if (SG.UI._lastCustomCfg) SG.UI.openCustom(SG.UI._lastCustomCfg);
+    else SG.UI.show('title');
+  };
+
+  function advanceMoveShow(ms, dt) {
+    var cur = ms.moves[ms.mi];
+    if (!cur) { ms.mi = 0; return; }
+    ms.mt += dt;
+    var pr = Math.min(1, ms.mt / cur.dur);
+    var anim = SHOW_ANIMS[cur.anim] || SHOW_ANIMS.punch;
+    var idx = 0;
+    for (var i = 0; i < anim.segs.length; i++) if (pr >= anim.segs[i][0]) idx = i;
+    if (idx !== ms.seg) {
+      ms.seg = idx;
+      anim.segs[idx].slice(2).forEach(function (e) {
+        var k = e.split(':')[0], v = e.split(':')[1];
+        if (k === 'sfx') SG.Audio.sfx(v);
+        else if (k === 'fx:flash') ms.flash = 0.6;
+        else if (k === 'fx:shake') ms.shake = 0.25;
+        else if (k === 'fx:spark') ms.fx.push({ x: 760, y: 470, vx: -160, vy: -120, life: 0.5, c: '#ffe08a', s: 4 });
+        else if (k === 'fx:sparkBig') for (var j = 0; j < 10; j++) ms.fx.push({ x: 800, y: 470, vx: -80 - Math.random() * 220, vy: -80 - Math.random() * 220, life: 0.55, c: '#ffb347', s: 5 });
+        else if (k === 'fx:ring') for (var r = 0; r < 12; r++) ms.fx.push({ x: 430, y: 500, vx: Math.cos(r / 12 * 6.28) * 260, vy: Math.sin(r / 12 * 6.28) * 130, life: 0.5, c: '#ff9a4d', s: 4 });
+        else if (k === 'fx:quake') for (var q = 0; q < 14; q++) ms.fx.push({ x: 300 + Math.random() * 400, y: 620, vx: (Math.random() - 0.5) * 300, vy: -150 - Math.random() * 250, life: 0.7, c: '#c8a05a', s: 5 });
+        else if (k === 'fx:fireball' || k === 'fx:fireballBig') ms.proj = { x: 430, y: 470, r: k === 'fx:fireballBig' ? 22 : 12, hit: k === 'fx:fireballBig' ? 18 : 8 };
+      });
+      if (anim.segs[idx].indexOf('fx:spark') >= 0 || anim.segs[idx].indexOf('fx:sparkBig') >= 0 || anim.segs[idx].indexOf('fx:quake') >= 0) {
+        ms.dummyHurt = 0.4;
+        var dv = anim.segs[idx].indexOf('fx:quake') >= 0 ? 30 : 8;
+        ms.dmg += dv;
+        ms.nums.push({ x: 880, y: 430, v: dv, life: 0.8 });
+      }
+    }
+    if (ms.proj) {
+      ms.proj.x += 520 * dt;
+      if (ms.proj.x > 860) {
+        ms.dummyHurt = 0.4;
+        ms.dmg += ms.proj.hit;
+        ms.nums.push({ x: 880, y: 430, v: ms.proj.hit, life: 0.8 });
+        for (var s2 = 0; s2 < 8; s2++) ms.fx.push({ x: 870, y: 460, vx: (Math.random() - 0.3) * 200, vy: -Math.random() * 200, life: 0.5, c: '#ff9a4d', s: 4 });
+        ms.proj = null;
+      }
+    }
+    ms.dummyHurt = Math.max(0, ms.dummyHurt - dt);
+    for (var f = ms.fx.length - 1; f >= 0; f--) {
+      var pt = ms.fx[f];
+      pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.vy += 700 * dt; pt.life -= dt;
+      if (pt.life <= 0) ms.fx.splice(f, 1);
+    }
+    for (var d2 = ms.nums.length - 1; d2 >= 0; d2--) {
+      ms.nums[d2].y -= 50 * dt; ms.nums[d2].life -= dt;
+      if (ms.nums[d2].life <= 0) ms.nums.splice(d2, 1);
+    }
+    if (ms.shake > 0) ms.shake -= dt;
+    if (ms.flash > 0) ms.flash -= dt * 2;
+    if (ms.mt >= cur.dur + 0.5) {
+      ms.mi = (ms.mi + 1) % ms.moves.length;
+      ms.mt = 0; ms.seg = -1;
+    }
+  }
+
+  function drawMoveShow(ctx, ms) {
+    var sx = ms.shake > 0 ? (Math.random() - 0.5) * 12 : 0;
+    var sy = ms.shake > 0 ? (Math.random() - 0.5) * 10 : 0;
+    ctx.save();
+    ctx.translate(sx, sy);
+    var g = ctx.createLinearGradient(0, 0, 0, 720);
+    g.addColorStop(0, '#2b3358'); g.addColorStop(1, '#151a2e');
+    ctx.fillStyle = g; ctx.fillRect(-20, -20, 1320, 760);
+    ctx.fillStyle = 'rgba(240,220,150,0.9)';
+    ctx.beginPath(); ctx.arc(640, 150, 80, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#6a4a2a'; ctx.lineWidth = 8;
+    ctx.beginPath(); ctx.arc(640, 150, 80, 0, 7); ctx.stroke();
+    ctx.fillStyle = '#4a3b2a'; ctx.fillRect(-20, 620, 1320, 120);
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-20, 620); ctx.lineTo(1300, 620); ctx.stroke();
+    if (ms.proj) {
+      var pg = ctx.createRadialGradient(ms.proj.x, ms.proj.y, 2, ms.proj.x, ms.proj.y, ms.proj.r * 2);
+      pg.addColorStop(0, 'rgba(255,220,120,.95)'); pg.addColorStop(1, 'rgba(255,120,40,0)');
+      ctx.fillStyle = pg;
+      ctx.beginPath(); ctx.arc(ms.proj.x, ms.proj.y, ms.proj.r * 2, 0, 7); ctx.fill();
+    }
+    ms.fx.forEach(function (p) {
+      ctx.globalAlpha = Math.min(1, p.life * 2.5);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s);
+      ctx.globalAlpha = 1;
+    });
+    var dPose = ms.dummyHurt > 0 ? 'hurt' : 'idle';
+    SG.Stick.draw(ctx, { x: 880, y: 620, facing: -1, pose: dPose, t: 0.6,
+      custom: { color: 'black', hair: 'none', hat: 'none', clothes: 'none', weapon: 'fist', gear: 'none', name: '' } });
+    ms.nums.forEach(function (n) {
+      ctx.globalAlpha = Math.min(1, n.life * 2);
+      ctx.font = 'bold 26px system-ui'; ctx.fillStyle = '#ff9a4d';
+      ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 4;
+      ctx.strokeText(n.v, n.x, n.y); ctx.fillText(n.v, n.x, n.y);
+      ctx.globalAlpha = 1;
+    });
+    var cur = ms.moves[ms.mi] || ms.moves[0];
+    var anim = SHOW_ANIMS[cur.anim] || SHOW_ANIMS.punch;
+    var p = Math.min(1, ms.mt / cur.dur);
+    var seg = anim.segs[0];
+    for (var i2 = 0; i2 < anim.segs.length; i2++) if (p >= anim.segs[i2][0]) seg = anim.segs[i2];
+    var poseName = seg[1];
+    var yOff = 0;
+    if (poseName === 'jump' && p > 0.15) yOff = -Math.sin(Math.min(1, (p - 0.15) / 0.25) * Math.PI) * 150;
+    var glow = poseName === 'charge' ? 0.7 : poseName === 'ult' ? 1 : 0;
+    SG.Stick.draw(ctx, { x: 430, y: 620 + yOff, facing: 1, pose: poseName, t: ms.mt, custom: ms.custom, glow: glow });
+    ctx.restore();
+    if (ms.flash > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,' + Math.min(0.55, ms.flash) + ')';
+      ctx.fillRect(0, 0, 1280, 720);
+    }
+    var bannerA = ms.mt < 0.3 ? ms.mt / 0.3 : ms.mt > cur.dur - 0.5 ? Math.max(0, (cur.dur - ms.mt) / 0.5) : 1;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, bannerA));
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 52px system-ui, sans-serif';
+    ctx.lineWidth = 9; ctx.strokeStyle = 'rgba(120,20,20,.9)';
+    ctx.strokeText(cur.name, 640, 150);
+    var tg = ctx.createLinearGradient(0, 100, 0, 170);
+    tg.addColorStop(0, '#fff2b0'); tg.addColorStop(1, '#ff9040');
+    ctx.fillStyle = tg;
+    ctx.fillText(cur.name, 640, 150);
+    ctx.restore();
+    ctx.fillStyle = 'rgba(10,12,24,.78)';
+    ctx.fillRect(0, 640, 1280, 80);
+    ctx.fillStyle = '#ffd97a'; ctx.font = 'bold 17px system-ui';
+    ctx.fillText('招式 ' + (ms.mi + 1) + '/' + ms.moves.length + ' · ' + cur.name, 40, 672);
+    ctx.fillStyle = '#cfd8ff'; ctx.font = '15px system-ui';
+    ctx.fillText(cur.desc, 40, 700);
+    ctx.fillStyle = '#7c86a8'; ctx.font = '13px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText('✕ 退出演示（右上角）', 1240, 690);
+    ctx.textAlign = 'left';
+  }
+
   // ---------- 静音切换（M 键 / 系统按钮条共用） ----------
   game.toggleMute = function () {
     var v = SG.Audio.getVolumes();
@@ -75,6 +244,23 @@
     else { SG.Audio.setVolumes({ master: game._lastMaster || 0.8 }); }
     game.saveSettings();
     return SG.Audio.getVolumes().master === 0;
+  };
+
+  // ---------- 自定义场景（设计器产物） ----------
+  game.customStages = loadJSON('sga_customStages', []);
+  game.customStages.forEach(function (s) {
+    if (!SG.DATA.STAGES.find(function (x) { return x.id === s.id; })) SG.DATA.STAGES.push(s);
+  });
+  game.addCustomStage = function (s) {
+    if (!SG.DATA.STAGES.find(function (x) { return x.id === s.id; })) SG.DATA.STAGES.push(s);
+    game.customStages.push(s);
+    saveJSON('sga_customStages', game.customStages);
+  };
+  game.removeCustomStage = function (id) {
+    var i = SG.DATA.STAGES.findIndex(function (x) { return x.id === id; });
+    if (i >= 6) SG.DATA.STAGES.splice(i, 1);   // 内置 6 个场景不可删
+    game.customStages = game.customStages.filter(function (x) { return x.id !== id; });
+    saveJSON('sga_customStages', game.customStages);
   };
 
   // 初始化默认档案
@@ -121,32 +307,9 @@
     SG.UI.show('roster');
   };
 
-  // ---------- 大招演示：角色在演武场循环释放武器大招 ----------
-  game.startUltDemo = function (custom) {
-    var c = cloneCustom(custom);
-    var dummy = Object.assign(SG.DATA.defaultCustom(), {
-      color: 'black', hair: 'none', hat: 'none', clothes: 'none', weapon: 'fist', name: '木桩'
-    });
-    var battle = new SG.Battle({
-      mode: 'ultdemo', stage: 'dojo', roundsToWin: 9999, roundTime: 9999, demoLoop: true,
-      p1: { name: c.name || '演示', custom: c, ctrl: 'human' },
-      p2: { name: '木桩', custom: dummy, hp: 99999, ctrl: 'dummy' },
-      onEvent: function () {}
-    });
-    game.battle = battle;
-    game.battleMeta = null;
-    game.state = 'battle';
-    game.paused = false;
-    hideUI();
-    SG.Audio.music('battle');
-  };
-  game.stopUltDemo = function () {
-    game.battle = null;
-    game.state = 'menu';
-    SG.Audio.music('menu');
-    if (SG.UI._lastCustomCfg) SG.UI.openCustom(SG.UI._lastCustomCfg);   // 回到编辑器（保留编辑内容）
-    else SG.UI.show('title');
-  };
+  // ---------- 大招演示（保留旧接口，内部转招式演示场） ----------
+  game.startUltDemo = function (custom) { game.startMoveShow(custom); };
+  game.stopUltDemo = game.stopMoveShow;
   if (!game.settings) {
     game.settings = { master: 0.8, music: 0.55, sfx: 0.9, touch: 'auto' };
   }
@@ -290,8 +453,10 @@
 
   game.startVersusBattle = function () {
     var v = game.versus;
+    var stage = v.stage && v.stage !== 'random' ? v.stage :
+      SG.DATA.STAGES[Math.floor(Math.random() * SG.DATA.STAGES.length)].id;
     launchBattle({
-      mode: 'versus', stage: SG.DATA.STAGES[Math.floor(Math.random() * 6)].id,
+      mode: 'versus', stage: stage,
       roundsToWin: 2, roundTime: 60,
       p1: { name: v.p1.name, custom: cloneCustom(v.p1.custom),
             ctrl: v.p1auto ? cloneCustom(game.aiByDifficulty[v.difficulty]) : 'human' },
@@ -340,7 +505,8 @@
         players.push({ name: preset.name, custom: cloneCustom(preset.custom), cpu: false });
       }
     }
-    game.tournament = { players: players, rounds: [], champion: null, third: [], curIdx: 0 };
+    game.tournament = { players: players, rounds: [], champion: null, third: [], curIdx: 0,
+      stage: game.tournament.stage || 'random' };
   };
 
   game.beginTournament = function () {
@@ -408,8 +574,10 @@
     var m = game.currentMatch();
     if (!m) return;
     var a = m.a, b = m.b;
+    var stage = game.tournament.stage && game.tournament.stage !== 'random' ? game.tournament.stage :
+      SG.DATA.STAGES[Math.floor(Math.random() * SG.DATA.STAGES.length)].id;
     launchBattle({
-      mode: 'tournament', stage: 'dojo', roundsToWin: 2, roundTime: 60,
+      mode: 'tournament', stage: stage, roundsToWin: 2, roundTime: 60,
       p1: { name: a.name, custom: cloneCustom(a.custom), ctrl: 'human' },
       p2: { name: b.name, custom: cloneCustom(b.custom), ctrl: b.cpu ? cloneCustom(game.aiByDifficulty[1]) : 'human' },
       onEnd: function (battle, result) { tournamentMatchEnd(m, result); }
@@ -495,7 +663,8 @@
   }
 
   game.quitTournament = function () {
-    game.tournament = { players: game.tournament.players, rounds: [], champion: null, third: [], curIdx: 0 };
+    game.tournament = { players: game.tournament.players, rounds: [], champion: null, third: [], curIdx: 0,
+      stage: game.tournament.stage || 'random' };
     game.state = 'menu';
     SG.Audio.music('menu');
     SG.UI.show('title');
@@ -662,7 +831,7 @@
       game.sysPause.classList.toggle('hiddenbtn', !inGame);
       game.sysAuto.classList.toggle('hiddenbtn', !(game.state === 'battle' || game.state === 'casual'));
       var padVis = SG.Touch && SG.Touch.isVisible();
-      var demoOn = game.state === 'battle' && game.battle && game.battle.demoLoop;
+      var demoOn = game.state === 'showcase';
       game.sysbar.style.display = padVis || demoOn ? 'none' : 'flex';
       game.demoExit.style.display = demoOn ? 'block' : 'none';
       if (game.sysMute) {
@@ -673,14 +842,29 @@
 
     if (!game.paused) {
       acc += el;
-      while (acc >= DT) {
-        update(DT);
-        acc -= DT;
-      }
+      try {
+        while (acc >= DT) {
+          update(DT);
+          acc -= DT;
+        }
+      } catch (e) { showErr('update: ' + e.message); }
     }
-    render();
-    SG.UI.tickPreviews(el);
+    try { render(); } catch (e) { showErr('render: ' + e.message); }
+    try { SG.UI.tickPreviews(el); } catch (e) { showErr('previews: ' + e.message); }
   }
+
+  // 主循环看门狗：rAF 链意外中断时自动恢复（防单次异常杀死整个游戏）
+  setInterval(function () {
+    if (game.paused) { game._watchStale = 0; return; }
+    if (game.menuT === (game._watchLast || 0)) {
+      game._watchStale = (game._watchStale || 0) + 500;
+      if (game._watchStale >= 1500) {
+        lastT = 0; acc = 0;
+        requestAnimationFrame(frame);
+        game._watchStale = 0;
+      }
+    } else { game._watchStale = 0; game._watchLast = game.menuT; }
+  }, 500);
 
   function update(dt) {
     game.menuT += dt;
@@ -702,6 +886,8 @@
         game._replayTail = 0;
         game.battle.update(dt, frames);
       }
+    } else if (game.state === 'showcase') {
+      advanceMoveShow(game.moveShow, DT);
     } else if (game.state === 'casual') {
       game.casual.update(dt, casualInputs());
       if (game.casual.over && !game.casual._ended) {
@@ -716,6 +902,8 @@
     ctx.clearRect(0, 0, 1280, 720);
     if (game.state === 'battle' || game.state === 'replay') {
       game.battle.draw(ctx);
+    } else if (game.state === 'showcase') {
+      drawMoveShow(ctx, game.moveShow);
     } else if (game.state === 'casual') {
       game.casual.draw(ctx);
     } else if (game.state === 'ceremony') {
@@ -967,7 +1155,7 @@
     demoExit.textContent = '✕ 退出演示';
     demoExit.className = 'sysbtn';
     demoExit.style.cssText = 'position:fixed;top:12px;right:12px;width:auto;height:38px;border-radius:20px;font-size:14px;z-index:30;display:none;';
-    demoExit.addEventListener('click', function () { game.stopUltDemo(); });
+    game.demoExit.addEventListener('click', function () { game.stopMoveShow(); });
     doc.getElementById('stage-wrap').appendChild(demoExit);
     game.demoExit = demoExit;
 

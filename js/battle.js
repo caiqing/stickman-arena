@@ -58,7 +58,7 @@
     this.ambient = [];
     this.lightning = 0;
     this.setAnnounce(this.mode === 'story' ? ('第 ' + (this.storyLevel ? this.storyLevel.id : '?') + ' 关 · ' + (this.storyLevel ? this.storyLevel.name : '')) : 'Round 1', 1.4);
-    this.sfx('bell');
+    if (!opts.silent) this.sfx('bell');
   }
 
   Battle.prototype = {

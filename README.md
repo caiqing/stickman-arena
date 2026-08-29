@@ -11,7 +11,7 @@
 
 ![托管 AI 决战大漠 Boss 砂大锤](media/boss-fight.gif)
 
-*🤖 托管 AI 持红缨长枪，大漠决战 Boss「沙漠之鹰·砂大锤」（115 血力量型）。[下载完整视频](media/boss-fight.mp4) · [▶ 观看可交互回放](https://caiqing.github.io/stickman-arena/#r=SGA1.eyJ2IjoxLCJtIjoi5pWF5LqLwrflpKfmvKDCt+aymeS5i+W3qOaxiSIsInIiOiLmlYXkuovmqKHlvI/vvJrlpKfkvqAg6IOcIiwiZCI6MjUsInMiOiJkZXNlcnQiLCJ3IjoxLCJwMSI6eyJuIjoi5aSn5L6gIiwiYyI6eyJjb2xvciI6IndoaXRlIiwiaGFpciI6Im5vbmUiLCJoYXQiOiJzdHJhdyIsImNsb3RoZXMiOiJjYXBlIiwid2VhcG9uIjoic3BlYXIiLCJnZWFyIjoiYm9vdHMiLCJuYW1lIjoi5aSn5L6gIn19LCJwMiI6eyJuIjoi5rKZ5ryg5LmL6bmwwrfnoILlpKfplKQiLCJjIjp7ImNvbG9yIjoieWVsbG93IiwiaGFpciI6Im5vbmUiLCJoYXQiOiJzdHJhdyIsImNsb3RoZXMiOiJiZWx0Iiwid2VhcG9uIjoiaGFtbWVyIiwiZ2VhciI6Im5vbmUifX0sImYiOlswLDEyOCw4MywwLDEsNiwwLDY1LDEsMCwxLDExLDYsMSwxLDAsMSwxMSwwLDUsMSwwLDAsMTksMiwwLDUsMiwxLDExLDMyLDEsMSwwLDEsOSwxLDEsMTcsMSwyLDcsMTYsMiwxLDAsMiwxMywxNiw4LDEsMCw4LDEzLDEsOCwxMSwxLDE2LDEsMSwwLDEsOCwwLDI2LDgsMzIsMSw4LDAsMjUsOCwzMiwxLDgsMCwyNSw4LDMyLDEsOCwwLDEsMTYsMCwxLDAsMCw3LDE2LDAsMSwwLDAsNywwLDE2LDEsMCwwLDIsMTYsMCwxLDAsMCwxLDAsOCwxMSwxNiw4LDIsMCw4LDYsMCwyLDcsOCwyLDEyLDIsMiwxMywyLDgsMTQsOCw4LDEzLDgsMSw3LDE2LDEsMSwwLDEsNywwLDE2LDEsMCwwLDE0LDMyLDAsMSwwLDAsNSwwLDgsMTEsMiw4LDQsMzIsOCwxLDAsOCwxMSw4LDgsMSw4LDEsMSw4LDMyLDEsOCwwLDIwLDE2LDAsMSwwLDAsMTEsMiwwLDEsMiwxNiwxLDIsMSw0Miw4LDEsMzEsOCwzMiwxLDgsMCwxNyw4LDE2LDEsOCwwLDEyLDgsMTYsMSw4LDAsNyw4LDMyLDEsOCwwLDIyLDgsMzIsMSw4LDAsNSwxNiwwLDEsMCwwLDEyLDAsMSwxLDgsMSwyMCwzMiwxLDEsMCwxLDExLDEsMSwxOSwxLDIsNCwzMiwyLDEsMCwyLDUsMCwzMiwxLDAsMCw2LDMyLDAsMSwwLDAsMTcsMCw4LDUsMTYsOCwxLDAsOCwxMSwzMiw4LDEsMCw4LDgsMCwyLDIsMCwzMiwxLDAsMCwyLDgsMCwxNCw4LDgsMzAsOCwxNiwxLDgsMCwxOSwxNiwwLDEsMCwxLDIwLDMyLDEsMSwwLDEsMTksMzIsMSwxLDAsMSwxMywwLDgsMyw4LDgsMjEsMSw4LDIsMSwyLDgsMzIsMiwxLDAsMiw2LDAsMzIsMSwwLDAsMSw4LDAsMjIsOCwzMiwxLDgsMCwyLDE2LDAsMSwwLDAsNiwwLDI1NiwxLDAsMCwxLDAsMjU2LDIsMCwwLDUsMCwyNTYsMjEsMCwwLDEsMiwwLDEyLDIsNiw1LDEsNiwyNSwxLDIsMiw2NSwyLDEsMSwyLDI3LDY1LDEyOCwxLDEsMTI4LDUsNSwxMjgsMTUsNSwwLDQsMSwwLDE5LDEsMiw2LDY1LDIsMSwxLDIsMjIsMzIsMiwxLDAsMiw1LDAsMzIsMSw4LDAsMjAsOCw4LDEsMjU2LDgsMiwwLDgsMSw4LDgsMywyNTYsOCwxLDAsOCwyLDI1Niw4LDEsMCw4LDMsMjU2LDgsMSwwLDgsMSwyNTYsOCwzLDAsOCwyLDI1Niw4LDMsMiwyLDIsMjU2LDIsMjEsMCwzMiwxLDAsMCwyNCw4LDAsOCw4LDMyLDEsOCwwLDMsMzIsMCwxLDAsMCwxMiwwLDE2LDEsMCwwLDEsMCwzMiwxLDAsMCwxLDgsMCwyNSw4LDgsMjAsMTYsOCwxLDAsOCwxOCwxNiw4LDEsMCw4LDE4LDMyLDIsMSwwLDIsMywwLDMyLDEsMCwwLDEyNl19)*
+*🤖 托管 AI 持红缨长枪，大漠决战 Boss「沙漠之鹰·砂大锤」（115 血力量型）。[下载完整视频](media/boss-fight.mp4)*
 
 ## 如何开始
 
@@ -25,12 +25,14 @@
 
 | 模式 | 说明 |
 |---|---|
-| 📖 **故事模式 · 暗影危机** | 暗影军团入侵墨水大陆夺走圣火令。6 大关卡：新手村 → 竹林 → 大漠 → 雪山 → 火山 → 暗影王城。每关有开场/结局剧情对话，击败各关 Boss（村头混混·阿棍、飞刀客·燕子三、沙漠之鹰·砂大锤、冰霜法师·凛、烈焰武士·焱、最终 BOSS 暗影武帝·玄——血量过半会狂暴）。通关获得星级评价（S/A/B）、评分入榜，并解锁新武器/帽子/服装/装备。 |
-| ⚔️ **双人对战** | 本地同键盘 3 局 2 胜。P2 可切换为电脑操控（简单/普通/困难）。对局自动保存录像。 |
-| 🏆 **武林大会 · 家庭争霸赛** | 2~4 名家人（默认预设：爸爸、妈妈、大宝、小宝，可改名与自定角色）捉对厮杀：半决赛 → 决赛，冠军加冕「格斗界·武林盟主」，全队登上彩带纷飞的领奖台。 |
-| 🎮 **休闲中心** | ① **节奏跳舞**：三首舞曲，方向键/WASD 踩点，PERFECT/GOOD/连击判定；② **激流划船**：交替按 ←/→ 划桨，↑/↓ 三水道变道，躲礁石漩涡、捡金币、冲 600 米终点；③ **滑翔飞行**：按住 ↑ 喷气上升，收集星星，躲避气球与小鸟。 |
-| 🎬 **录像回放** | 每场对局结束自动录像（保留最近 12 场，RLE 压缩存储），可随时逐帧回看，结果与实战完全一致（确定性回放）。支持**微信分享**：二维码扫码（点开即看）、分享链接（点开即看）、分享码（对方粘贴导入）三种方式，把精彩对局发给家人。 |
-| 🏅 **评分榜** | 汇总故事通关、武林大会名次、双人对战与休闲小游戏的得分（本地保存前 50 名）。 |
+| 📖 **故事模式 · 暗影危机** | 暗影军团入侵墨水大陆夺走圣火令。6 大关卡：新手村 → 竹林 → 大漠 → 雪山 → 火山 → 暗影王城，网格化关卡地图。每关有开场/结局剧情对话，击败各关 Boss（村头混混·阿棍、飞刀客·燕子三、沙漠之鹰·砂大锤、冰霜法师·凛、烈焰武士·焱、最终 BOSS 暗影武帝·玄——血量过半会狂暴）。通关获得星级评价（S/A/B）、金币奖励（100 + 星数×100）与评分入榜，并解锁新武器/帽子/颜色。 |
+| ⚔️ **双人对战** | 本地同键盘 3 局 2 胜。P1/P2 均可切换 AI（简单/普通/困难），支持人机混战或 AI 表演赛。每场对战结束获得 200 金币，对局自动保存录像。 |
+| 🏆 **武林大会 · 家庭争霸赛** | 2~8 名家人（14 位家族预设：爷爷奶奶外公外婆叔叔阿姨 + 兄弟姐妹，可改名与自定角色）捉对厮杀，胜者晋级，冠军加冕「格斗界·武林盟主」。 |
+| 🧘 **修炼模式** | 道场课题制：按指引完成操作即可**永久习得** 5 种武学——影三连·拳（拳链第三段）、回旋踢·腿（腿链第三段）、攻防转换·弹反、背水一战（残血增伤）、咏春·日字冲拳（近身快拳奥义）。 |
+| 🛒 **武林商城** | 用金币购买强化道具：挂件（免疫小额伤害）、外骨骼（大幅强化）、法术卷轴（战斗中主动释放）。详见下文「商城与装备」。 |
+| 🎮 **休闲中心** | ① **节奏跳舞**：三首舞曲 × 三档难度（简单/普通/困难，影响卡片下落速度、判定窗口与音符密度），方向键/触屏踩点；② **激流划船**：交替按 ←/→ 划桨，↑/↓ 三水道变道，躲礁石漩涡、捡金币、冲 600 米终点；③ **滑翔飞行**：按住 ↑ 喷气上升，收集星星，躲避气球与小鸟。 |
+| 🎬 **录像回放** | 每场对局结束自动录像（保留最近 12 场，RLE 压缩存储），逐帧回看与实战完全一致（确定性回放）。支持**微信分享**：二维码扫码、分享链接、分享码三种方式。 |
+| 🏅 **评分榜** | 汇总故事通关、武林大会名次、双人对战与休闲小游戏的得分（本地保存前 50 名），托管成绩自动标注。 |
 
 ## 操作
 
@@ -44,64 +46,93 @@
 | 冲刺 | `I` | `数字3` 或 `/` |
 | 蓄力（按住） | `L` 或 `空格` | `数字0` 或 `;` |
 | 释放大招 | `U` | `回车` 或 `'` |
+| 释放卷轴（需装备） | `O` | `\` |
 
-通用：`P` / `Esc` 暂停 · `M` 静音 · 休闲模式方向键与 WASD 通用。
+通用：`G` 托管开关 · `P` / `Esc` 暂停 · `M` 静音 · 休闲模式方向键与 WASD 通用。
+
+## 战斗机制
+
+- **基础**：移动、跳跃（空中可出拳踢腿）、拳（快）、腿（重、击退大）、冲刺、格挡（减 85% 伤害，正面才有效；法术攻击穿透格挡只减 50%）。
+- **连招系统**：同类攻击 0.4 秒内连续按键自动衔接连段——拳链「直拳 → 后手拳 → 上勾拳」、腿链「扫踢 → 回旋踢」，共 3 段；段2 伤害×1.15，段3 伤害×1.45 且击退加强并前冲追击。
+- **21 种武器，各有专属大招**：从赤手拳法、青锋铁剑、青龙偃月刀到穿云长弓，再到乱入武林的配枪、冲锋枪、狙击枪、加特林——每种武器都有独立的大招、射程与手感。例如：
+  - 赤手拳法 → **升龙拳**（远距）/ **咏春·日字冲拳**（近身自动切换，需修炼解锁）
+  - 穿云长弓 → **穿云箭雨**（五连矢）；轻击拉弓射箭（箭矢带尾迹与命中闪线），重击近身踢腿自保
+  - 加特林 → **弹雨风暴**（天降弹雨 3 秒）；狙击枪 → **致命瞄准**（穿透一击）
+- **远程与投射物（攻守分级）**：普攻弹按轻击结算——可以被格挡有效减伤、触发挂件免疫、不会被击飞；大招弹按重击结算（顿帧 + 震屏 + 无视挂件免疫）。火球类属法术：受法袍与灵宠法盾减伤、穿透格挡。
+- **蓄力大招**：命中/受击积攒蓄力条，按住蓄力键站桩快速蓄力（会被打断）。蓄满后头顶浮现「⚡ 大招就绪」气泡，按大招键释放（无敌帧 + 演出 + 震屏）。
+- **胜负**：每回合 60 秒，血量清空被 K.O.（慢动作演出）；时间到按剩余血量百分比判胜。对战/大会 3 局 2 胜，故事模式每关 1 场定胜负。
+- **角色自定义**：肤色（13 种）、发型（8 种）、帽子（7 种）、服装（7 种）、武器（21 种）、装备与商城道具（见下），部分条目需通关故事模式解锁。支持「随机搭配」与招式演练场（木桩陪打，招式效果一目了然）。
+
+## 🐾 灵宠系统
+
+选人界面可携带一只灵宠参战（6 种，各有定位）：
+
+| 灵宠 | 类型 | 特点 |
+|---|---|---|
+| 🐯 小虎 | 陆地近战 | 勇猛扑咬，均衡输出 |
+| 🦊 灵狐 | 陆地近战 | 身法飘忽，出手快 |
+| 🦅 苍鹰 | 飞行远程 | 俯冲放电，脆皮高攻 |
+| 🦢 呆鹅 | 陆地近战 | 坦克型，替主人挡刀，自带 30% 法术护盾 |
+| 🐱 雷猫 | 陆地远程 | 远程雷电球（紫色电弧弹道） |
+| 🐻 小熊 | 陆地近战 | 铜墙铁壁（受击减伤 95%）+ 20% 法术护盾 |
+
+灵宠会跟随主人助攻、替主人拦截敌方投射物（按各自减伤扣血），法术护盾直接强化主人的法防。
+
+## 🛒 商城与装备
+
+**金币来源**：故事通关（100 + 星数×100）、双人对战（每场 200）。
+
+商城道具分**被动技**（装备后自动生效）与**主动技**（战斗中按键释放，带冷却），购买后在选人界面的对应栏位装备：
+
+| 道具 | 类型 | 价格 | 效果 |
+|---|---|---|---|
+| 🔵 铁壁挂件 | 被动 | 500 | 伤害低于 5 点的攻击完全免疫（大招仍会命中） |
+| 💠 金刚挂件 | 被动 | 1500 | 伤害低于 12 点的攻击完全免疫（需先购铁壁） |
+| 🦾 外骨骼·泰坦 | 被动 | 3000 | 弹道×2.0 · 近战×2.0 · 大招变为「泰坦轰击」双重冲击 |
+| 🦅 外骨骼·猎鹰 | 被动 | 2500 | 出招速度 ×1.8 · 移动速度 ×1.5 |
+| 📜 金身卷轴 | 主动 | 300 | 3 秒无敌金身，物理+法术全免（冷却 30 秒） |
+| 💢 狂暴卷轴 | 主动 | 250 | 5 秒攻击力 ×3.0（冷却 45 秒） |
+
+基础装备（通关解锁）：疾风之靴（移速+18%）、护心镜（生命+30）、力量护腕（伤害+12%）、法袍·灵护（法术伤害-60%）。
 
 ## 🤖 托管模式（懒人娱乐）
 
 战斗与休闲**所有玩法**都支持 AI 代打：游戏中按 `G` 或在暂停菜单点「🤖 托管」随时开关。
 
 - 战斗（故事/对战/武林大会）：P1 由最强参数 AI 代打，会进攻、格挡、蓄力放大招，HUD 显示 🤖 标识
-- 跳舞：AI 踩着判定点起舞，追求全 PERFECT
-- 划船：AI 交替划桨、自动变道避障、三道全堵时会松桨减速
-- 飞行：AI 自动躲气球小鸟、顺路捡星星
+- 跳舞：AI 踩着判定点起舞，追求全 PERFECT；划船：AI 交替划桨自动避障；飞行：AI 自动躲障捡星
 - 托管打出的成绩入评分榜时会标注「托管」
 
 ## 📱 移动端与响应式
 
-- 手机/平板浏览器直接访问在线版即可玩：触屏设备会**自动显示虚拟按键**（战斗：方向/跳/拳/腿/防/冲/蓄/大招 + ⏸暂停 + 🤖托管 + 🔊静音；跳舞：方向踩点；划船：左右划桨区 + 变道；飞行：按住上升）
-- 建议横屏游玩（竖屏会显示提示）
-- 桌面浏览器也可在「设置 → 虚拟按键」选择常开/关闭
-- **图形化系统按钮**：右下角常驻 🔊静音 / ⏸暂停 / 🤖托管（游戏中显示），鼠标点按即可，完全不依赖键盘
-- **响应式布局**：界面按屏幕高度分三档自动压缩（字体/间距/列表双列化），桌面、笔记本、手机横屏均无需滚动页面
-
-## 战斗机制
-
-- **基础**：移动、跳跃（空中可出拳踢腿）、拳（快）、腿（重、击退大）、冲刺、格挡（减 85% 伤害，正面才有效）。
-- **连招系统**：同类攻击 0.4 秒内连续按键自动衔接连段——拳链「直拳 → 后手拳 → 上勾拳」、腿链「扫踢 → 回旋踢」，共 3 段；段2 伤害×1.15，段3 伤害×1.45 且击退×1.9 并前冲追击。
-- **大招就绪提示**：蓄力满时角色头顶浮现金色「⚡ 大招就绪!」气泡并提示对应按键；触屏虚拟按键「必」同步闪烁。
-- **蓄力大招**：命中/受击都会积攒蓄力条；按住蓄力键可站桩快速蓄力（会被打断）。蓄力条满后按大招键，释放**武器专属大招**（无敌帧 + 演出 + 震屏）：
-  - 赤手拳法 → **升龙拳**（升空连击）
-  - 青锋铁剑 → **旋风斩**（周身三段斩）
-  - 红缨长枪 → **破空突刺**（超长距冲刺 + 冲击波）
-  - 崩山战锤 → **崩地震**（砸地震波，只伤地面敌人）
-  - 烈焰法杖 → **烈焰火球**（远程火球）
-  - 影风双截棍 → **影连击**（瞬身到对手背后连打）
-- **胜负**：每回合 60 秒，血量清空被 K.O.（慢动作演出）；时间到按剩余血量百分比判胜。对战/大会 3 局 2 胜，故事模式每关 1 场定胜负。
-- **角色自定义**：肤色（13 种）、发型（8 种）、帽子（7 种）、服装（7 种）、武器（6 种）、装备（疾风之靴/护心镜/力量护腕），部分条目需通关故事模式解锁。
+- 手机/平板直接访问在线版即可玩：触屏设备**自动显示虚拟按键**（战斗：方向/跳/拳/腿/防/冲/蓄/必/卷 + ⏸暂停 + 🤖托管 + 🔊静音；跳舞：方向踩点；划船：左右划桨区 + 变道；飞行：按住上升）
+- 建议横屏游玩（竖屏会显示提示）；桌面可在「设置 → 虚拟按键」常开/关闭
+- **响应式布局**：界面按屏幕高度自动压缩（字体/间距/网格列数自适应），桌面、笔记本、手机横屏均无需滚动
 
 ## 项目结构
 
 ```
 stickman-arena/
-├── index.html          # 入口页面
-├── css/style.css       # 界面样式
+├── index.html          # 入口页面（静态资源带版本参数防缓存）
+├── css/style.css       # 界面样式（含矮屏/窄屏响应式压缩）
 ├── js/
-│   ├── data.js         # 自定义选项/武器技能/关卡剧情/Boss 配置
+│   ├── data.js         # 武器/装备/商城道具/修炼武学/关卡剧情/Boss/场地配置
 │   ├── audio.js        # WebAudio 合成引擎（音效 + 多首循环 BGM）
-│   ├── stickman.js     # 火柴人骨骼姿势动画与外观渲染
-│   ├── fighter.js      # 角色物理/状态机/攻击判定/蓄力大招
-│   ├── battle.js       # 战斗管理/场景/HUD/特效/回合流程
+│   ├── stickman.js     # 火柴人骨骼姿势动画与外观渲染（瞄准/拉弓等武器姿势）
+│   ├── fighter.js      # 角色物理/状态机/攻击判定/远程射击/灵宠/大招
+│   ├── battle.js       # 战斗管理/投射物分级结算/场景/HUD/特效/回合流程
+│   ├── pet.js          # 灵宠系统（图鉴/渲染/战斗实体：助攻·挡弹·法盾）
 │   ├── ai.js           # CPU 控制器（性格参数化：激进/格挡/远程等）
 │   ├── replay.js       # 录像录制（RLE 压缩）与确定性回放
 │   ├── leaderboard.js  # 评分榜（localStorage）
-│   ├── casual.js       # 休闲三小游戏（跳舞/划船/飞行）
-│   ├── screens.js      # 全部界面（菜单/自定义/剧情/大会/榜单/回放）
-│   └── main.js         # 主循环、输入映射、模式流程、颁奖仪式
-└── scripts/sim_test.js # Node 无头回归测试（AI 对局/大招/录像一致性/Boss）
+│   ├── casual.js       # 休闲三小游戏（跳舞三难度/划船/飞行）
+│   ├── touch.js        # 移动端虚拟按键（多套触控布局）
+│   ├── screens.js      # 全部界面（菜单/自定义/商城/修炼/剧情/大会/榜单/回放）
+│   └── main.js         # 主循环、输入映射、模式流程、招式演练场、颁奖仪式
+└── scripts/sim_test.js # Node 无头回归测试（AI 对局/全武器命中/录像一致性/Boss）
 ```
 
-进度、解锁、评分榜与录像均保存在浏览器 `localStorage`（键前缀 `sga_`），清除浏览器数据即重置。
+进度、解锁、金币、评分榜与录像均保存在浏览器 `localStorage`（键前缀 `sga_`），清除浏览器数据即重置。
 
 ## 如何把录像分享给家人（微信）
 
@@ -110,10 +141,21 @@ stickman-arena/
 3. **方式二 · 分享链接**：复制链接粘贴到微信聊天，家人点开自动弹出"收到分享录像"，一键导入观看；
 4. **方式三 · 分享码**：复制 `SGA1.` 开头的分享码发到微信，家人在本机游戏的「录像回放 → 导入」框粘贴导入。对局过长、超出二维码容量时，面板会自动提示改用此方式。
 
+### 录像存储原理（RLE 压缩）
+
+录像不保存画面，而是**逐帧记录双方的按键输入**，回放时在同样的初始局面下逐帧重放输入，因此回放结果与实战逐帧一致（每帧 1/60 秒）。
+
+原始数据量：每帧记录 P1、P2 两份输入，一份输入约 10 个按键（移动/跳跃/格挡/拳/腿/冲刺/蓄力/大招/卷轴），直接存会非常庞大。为此做了两层压缩：
+
+1. **位打包**：一份输入的各个按键用二进制位拼成一个整数（如"右+拳"= 按位或后得到一个数字），一帧两人输入就是 2 个整数；
+2. **RLE（Run-Length Encoding，游程编码）**：格斗游戏里双方经常连续几十帧保持同样的按键状态（比如都站着不动、或按住格挡），把"连续相同的帧"合并为一条 `[P1输入, P2输入, 持续帧数]` 三元组。回放时按持续帧数展开即可精确还原每一帧。
+
+实测效果（回归测试中的往返用例）：2000 帧对局压缩为 861 个数字，且解码后与原始逐帧输入完全一致。压缩后的数据经 base64 编码成为分享码（`SGA1.` 前缀），可存入 localStorage、塞进二维码或微信传播。
+
 ## 测试
 
 ```bash
 node scripts/sim_test.js
 ```
 
-覆盖：10 场随机 AI 对局完整跑通、6 种武器大招释放并命中、录像回放与实战逐帧一致（最终 HP/位置误差 < 0.001）、6 个故事 Boss 可击败、RLE 编解码往返。
+覆盖：10 场随机 AI 对局完整跑通、21 种武器普攻命中、6 种基础武器大招释放并命中、录像回放与实战逐帧一致（最终 HP/位置误差 < 0.001）、分享码往返、连招与修炼闭环、6 个故事 Boss 可击败、RLE 编解码往返。

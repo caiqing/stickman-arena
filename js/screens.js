@@ -1145,6 +1145,7 @@
       var panel = el('div', 'panel');
       panel.appendChild(el('h2', 'title', cfg.title || '选择角色'));
       var grid = el('div', 'roster-grid');
+      var pend = [];   // show('picker') 会重置预览列表，先收集、show 之后再注册
       SG.game.roster.forEach(function (item) {
         var card = el('div', 'roster-card pick');
         var cv = el('canvas'); cv.width = 84; cv.height = 104;
@@ -1158,6 +1159,7 @@
           cfg.onPick(JSON.parse(JSON.stringify(item.custom)), item);
         });
         grid.appendChild(card);
+        pend.push({ canvas: cv, custom: item.custom, t: Math.random() * 3 });
       });
       panel.appendChild(grid);
       panel.appendChild(el('div', 'tiny', '想新建或修改角色？去「🎭 人物设定」页操作。'));
@@ -1167,6 +1169,7 @@
       panel.appendChild(br);
       s.appendChild(panel);
       this.show('picker');
+      pend.forEach(function (p2) { UI.previews.push(p2); });
     },
 
     // ================= 场景选择器 / 场景设计器 =================

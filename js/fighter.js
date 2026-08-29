@@ -350,8 +350,17 @@
         return 'parried';
       }
 
+      // 法术防御：法袍被动 + 灵宠护法
+      var mgDef = 0;
+      if (info.magic) {
+        if (this.custom.gear === 'robe') mgDef += 0.6;
+        mgDef += (this._petMagicDef || 0);
+        mgDef = Math.min(0.8, mgDef);
+      }
       if (blocking) {
-        var chip = info.dmg * 0.15;
+        // 法术攻击穿透格挡（只减 50%），物理攻击正常格挡（减 85%）
+        var blockRate = info.magic ? 0.5 : 0.15;
+        var chip = info.dmg * blockRate * (1 - mgDef);
         this.hp = Math.max(0, this.hp - chip);
         this.vx = info.kb * 0.3 * info.from;
         battle.sfx('block');
@@ -359,7 +368,8 @@
         battle.onMeterGain(this, 3);
         return 'blocked';
       }
-      this.hp = Math.max(0, this.hp - info.dmg);
+      var mgDmg = info.dmg * (1 - mgDef);
+      this.hp = Math.max(0, this.hp - mgDmg);
       this.state = 'hurt'; this.stateT = 0;
       this.hurtT = info.hitstun;
       this.vx = info.kb * info.from;
@@ -375,6 +385,7 @@
         return 'ko';
       }
       battle.sfx(info.hitSfx);
+      if (mgDef > 0 && info.magic) battle.dmgNums.push({ x: this.x, y: this.y - 210, val: '法防!', life: 0.8 });
       battle.onMeterGain(this, 6);
       return 'hit';
     },

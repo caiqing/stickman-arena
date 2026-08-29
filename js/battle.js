@@ -39,9 +39,12 @@
     this.floorY = FLOOR; this.minX = 40; this.maxX = W - 40;
     this.particles = []; this.dmgNums = []; this.projectiles = []; this.afterimages = [];
     this.slashes = [];   // 剑气/刀气弧光特效
+    this.aoeZones = [];  // 法术 AOE 区域
     // 灵宠
     this.petP1 = opts.p1.pet ? new SG.PetEntity(opts.p1.pet, this.p1, 1) : null;
+    this.p1._petMagicDef = this.petP1 ? (this.petP1.def.magicShield || 0) : 0;
     this.petP2 = opts.p2.pet ? new SG.PetEntity(opts.p2.pet, this.p2, -1) : null;
+    this.p2._petMagicDef = this.petP2 ? (this.petP2.def.magicShield || 0) : 0;
     this.shakeT = 0; this.shakeAmp = 0;
     this.hitstop = 0; this.slowmo = 0; this.flash = 0;
     this.banner_ = null;
@@ -297,6 +300,32 @@
         this.flash = 0.5;
       }
 
+      // 法术 AOE 区域更新
+      for (var az = this.aoeZones.length - 1; az >= 0; az--) {
+        var z = this.aoeZones[az];
+        z.timer -= dt;
+        if (z.phase === 'warn' && z.timer <= 0) {
+          z.phase = 'erupt';
+          z.timer = 0.8;
+          // 爆发伤害
+          var target = z.owner === this.p1 ? this.p2 : this.p1;
+          var dx2 = target.x - z.x;
+          if (Math.abs(dx2) < z.radius && target.onGround) {
+            this.onHit(z.owner === this.p1 ? this.p1 : this.p2, target, {
+              dmg: z.dmg, kb: 200, hitstun: 0.4, magic: true, isUlt: true,
+              hitSfx: 'hitHeavy', magicDefTarget: target._petMagicDef || 0
+            });
+          }
+          for (var fi = 0; fi < 20; fi++) {
+            this.fx.push({ x: z.x + (Math.random()-0.5)*z.radius*2, y: 620,
+              vx: (Math.random()-0.5)*200, vy: -200-Math.random()*300,
+              life: 0.6, c: '#ff6b30', s: 6 });
+          }
+        } else if (z.phase === 'erupt' && z.timer <= 0) {
+          this.aoeZones.splice(az, 1);
+        }
+      }
+
       // 修炼模式进度
       if (this.training && attacker === this.p1) {
         var tr = this.training;
@@ -338,7 +367,7 @@
         if ((px - p.x) * (px - p.x) + (py - p.y) * (py - p.y) <= p.r * p.r && target.state !== 'ko') {
           this.onHit(p.owner, target, {
             dmg: p.dmg, kb: 300, hitstun: 0.42, launch: -260,
-            heavy: true, hitSfx: 'hitHeavy', isUlt: true
+            heavy: true, magic: true, hitSfx: 'hitHeavy', isUlt: true
           });
           this.spawnHitSparks(p.x, p.y, 14, true);
           this.projectiles.splice(i, 1);

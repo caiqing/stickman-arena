@@ -89,7 +89,7 @@
       ],
       locked: 3 },
     { id: 'staff',   name: '烈焰法杖', dmg: 0.95, spd: 1.0,  range: 1.2,
-      desc: '远程施法，火球灼敌', ult: { name: '烈焰火球', type: 'fire', dmg: 30 },
+      desc: '远程施法，火球灼敌', magic: true, ult: { name: '烈焰火球', type: 'fire', dmg: 30 },
       moves: [
         { name: '火花弹', desc: '指尖火花，远程骚扰', anim: 'fire-small', dur: 1.6 },
         { name: '烈焰护体', desc: '周身火环，近身者退', anim: 'ring', dur: 1.6 },
@@ -247,7 +247,8 @@
     { id: 'none',  name: '不带装备', },
     { id: 'boots', name: '疾风之靴', spd: 1.18, desc: '移动速度 +18%', locked: 2 },
     { id: 'mirror',name: '护心镜',   hp: 30,    desc: '最大生命 +30', locked: 4 },
-    { id: 'bracer',name: '力量护腕', dmg: 1.12, desc: '伤害 +12%', locked: 5 }
+    { id: 'bracer',name: '力量护腕', dmg: 1.12, desc: '伤害 +12%', locked: 5 },
+    { id: 'robe',  name: '法袍·灵护', desc: '法术伤害 -60%', magicDef: 0.6, locked: 4 },
   ];
 
   // ---------- 战斗场地 ----------

@@ -14,13 +14,13 @@
     { id: 'eagle',  name: '苍鹰',   type: 'fly',  hp: 40, atk: 10, def: 0.4,
       color: '#8a7a5a', ear: 'bird', tail: 'bird', move: 'ranged',
       desc: '翱翔天际，俯冲利爪' },
-    { id: 'goose',  name: '呆鹅',   type: 'fly',  hp: 80, atk: 4,  def: 0.9,
+    { id: 'goose',  name: '呆鹅',   type: 'fly',  hp: 80, atk: 4,  def: 0.9, magicShield: 0.3,
       color: '#e8e8e0', ear: 'bird', tail: 'bird', move: 'melee',
       desc: '坦克型呆鹅，替主人挡刀' },
     { id: 'cat',    name: '雷猫',   type: 'land', hp: 50, atk: 7,  def: 0.6,
       color: '#9c5ce0', ear: 'cat',  tail: 'cat',  move: 'ranged',
       desc: '雷电猫猫，远程放电' },
-    { id: 'bear',   name: '小熊',   type: 'land', hp: 90, atk: 5,  def: 0.95,
+    { id: 'bear',   name: '小熊',   type: 'land', hp: 90, atk: 5,  def: 0.95, magicShield: 0.2,
       color: '#8a6a42', ear: 'bear', tail: 'stub', move: 'melee',
       desc: '憨厚小熊，铜墙铁壁' }
   ];

@@ -1035,7 +1035,7 @@
     // 各场景姿势编排
     var p = d.st, who = d.actor;
     var poseL = 'idle', poseR = 'idle', yL = 0, yR = 0;
-    var ultNames = ['升龙拳', '旋风斩'];
+    var ultNames = ['旋风斩', '升龙拳'];   // 左=剑客用旋风斩，右=拳手用升龙拳
     if (d.scene === 'combo') {
       var ap, dp = p < 0.92 ? 'block' : (p < 1.55 ? 'hurt' : 'idle');
       if (p < 0.3) ap = 'punchW';

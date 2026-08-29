@@ -94,7 +94,9 @@
     var r2 = div('vrow');
     r2.appendChild(btn('冲', 'dash', 'vsmall'));
     r2.appendChild(btn('蓄', 'charge', 'vsmall'));
-    r2.appendChild(btn('必', 'ult', 'vbig'));
+    var ult = btn('必', 'ult', 'vbig');
+    ult.dataset.ult = '1';
+    r2.appendChild(ult);
     right.appendChild(r1);
     right.appendChild(r2);
     root.appendChild(right);
@@ -157,10 +159,15 @@
       if (mode !== m || rendered === null) { mode = m; rendered = null; }
       visible = shouldShow();
       render();
-      // 托管按钮实时高亮 / 静音图标同步
+      // 托管按钮实时高亮 / 静音图标同步 / 必杀键蓄力满闪烁
       if (autoBtnEl) autoBtnEl.classList.toggle('active', !!(SG.game && SG.game.autoPilot));
       if (muteBtnEl && SG.Audio) {
         muteBtnEl.textContent = SG.Audio.getVolumes().master > 0 ? '🔊' : '🔇';
+      }
+      var ultBtn = container.querySelector('[data-ult]');
+      if (ultBtn) {
+        var ready = SG.game.state === 'battle' && SG.game.battle && SG.game.battle.p1.meter >= 100;
+        ultBtn.classList.toggle('ult-ready', ready);
       }
     },
     input: function () {

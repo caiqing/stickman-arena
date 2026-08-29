@@ -356,6 +356,14 @@ body { overscroll-behavior: none; }
   box-sizing: border-box;
 }
 .vbtn.active { background: rgba(255, 220, 120, .4); border-color: #ffd97a; }
+.vbtn.ult-ready {
+  animation: vult-pulse 0.6s infinite;
+  border-color: #ffd34d; color: #ffd34d;
+}
+@keyframes vult-pulse {
+  0%, 100% { background: rgba(255, 211, 77, .25); box-shadow: 0 0 6px rgba(255, 211, 77, .4); }
+  50% { background: rgba(255, 211, 77, .6); box-shadow: 0 0 22px rgba(255, 211, 77, .95); }
+}
 .vsmall { width: 52px; height: 52px; font-size: 15px; }
 .vbig { width: 70px; height: 70px; background: rgba(245, 185, 66, .3); border-color: rgba(245, 185, 66, .6); font-size: 21px; }
 .vhcenter { position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); display: flex; gap: 14px; }

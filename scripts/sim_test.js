@@ -138,6 +138,34 @@ console.log('== 测试3b：分享码往返 ==');
   if (!same || bad !== null) failures++;
 })();
 
+// ---- 测试3c：连招系统（窗口衔接 + 段位加成 + 姿势区分） ----
+console.log('== 测试3c：连招系统 ==');
+(function () {
+  var b = new SG.Battle({
+    mode: 'versus', stage: 'dojo', roundsToWin: 99, roundTime: 999,
+    p1: { name: 'A', custom: Object.assign(SG.DATA.defaultCustom(), { weapon: 'fist' }), ctrl: 'human' },
+    p2: { name: 'B', custom: Object.assign(SG.DATA.defaultCustom(), { weapon: 'fist', name: '木桩' }), hp: 99999, ctrl: 'dummy' },
+    onEvent: function () {}
+  });
+  var dt = 1 / 60;
+  for (var w = 0; w < 100; w++) b.update(dt, {});   // 等 intro
+  var stages = [], dmgs = [];
+  // 连续三拳：每次等收招后立刻再按（窗口 0.42s 内）
+  for (var hit = 0; hit < 3; hit++) {
+    // 等 P1 可行动
+    for (var k = 0; k < 120 && !(b.p1.state === 'idle' || b.p1.state === 'walk'); k++) b.update(dt, { p1: {}, p2: {} });
+    b.update(dt, { p1: { punch: true }, p2: {} });   // 按下一帧
+    b.update(dt, { p1: {}, p2: {} });
+    stages.push(b.p1.atk ? b.p1.atk.stage : 'none');
+    dmgs.push(b.p1.atk ? b.p1.atk.dmgMul : 0);
+    // 打完这一段
+    for (var k2 = 0; k2 < 60 && b.p1.atk; k2++) b.update(dt, { p1: {}, p2: {} });
+  }
+  var ok = stages.join(',') === '1,2,3' && dmgs[2] === 1.45;
+  console.log('  段位: ' + stages.join('→') + ' · 伤害系数: ' + dmgs.join('→') + (ok ? ' ✅' : ' ❌'));
+  if (!ok) failures++;
+})();
+
 // ---- 测试4：故事模式全部Boss可击败（高攻击AI vs Boss） ----
 console.log('== 测试4：6个故事Boss ==');
 SG.DATA.STORY.forEach(function (lv) {

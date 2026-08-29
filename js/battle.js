@@ -641,6 +641,40 @@
         ctx.fillText(c2 + ' 连击!', W - 60, 180 + Math.sin(this.time * 14) * 3);
       }
       ctx.textAlign = 'left';
+
+      // 大招就绪提示气泡（角色头顶，醒目浮动）
+      var self2 = this;
+      [[this.p1, 'U / 必'], [this.p2, '回车 / U']].forEach(function (pair) {
+        var f = pair[0];
+        if (f.meter >= 100 && f.state !== 'ult' && f.state !== 'ko') {
+          var bob = Math.sin(self2.time * 5) * 5;
+          var bx = f.x, by = f.y - 200 + bob;
+          var keyHint = self2.mode === 'story' || f === self2.p1 ? '按 U' : (f.ctrl === 'human' ? '按回车' : 'U / 必');
+          ctx.save();
+          ctx.translate(bx, by);
+          var pul = 0.85 + Math.sin(self2.time * 9) * 0.15;
+          ctx.scale(pul, pul);
+          ctx.fillStyle = 'rgba(20,24,44,.88)';
+          ctx.strokeStyle = '#ffd34d'; ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          var w2 = 132, h2 = 44, r2 = 10;
+          ctx.moveTo(-w2 / 2 + r2, -h2 / 2);
+          ctx.arcTo(w2 / 2, -h2 / 2, w2 / 2, h2 / 2, r2);
+          ctx.arcTo(w2 / 2, h2 / 2, -w2 / 2, h2 / 2, r2);
+          ctx.arcTo(-w2 / 2, h2 / 2, -w2 / 2, -h2 / 2, r2);
+          ctx.arcTo(-w2 / 2, -h2 / 2, w2 / 2, -h2 / 2, r2);
+          ctx.closePath(); ctx.fill(); ctx.stroke();
+          // 小尾巴
+          ctx.beginPath(); ctx.moveTo(-6, h2 / 2 - 1); ctx.lineTo(0, h2 / 2 + 9); ctx.lineTo(6, h2 / 2 - 1);
+          ctx.fillStyle = 'rgba(20,24,44,.88)'; ctx.fill();
+          ctx.fillStyle = '#ffd34d'; ctx.font = 'bold 15px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText('⚡ 大招就绪!', 0, -6);
+          ctx.fillStyle = '#fff'; ctx.font = 'bold 14px system-ui';
+          ctx.fillText(keyHint + ' 释放', 0, 13);
+          ctx.restore();
+        }
+      });
     },
 
     drawBanner: function (ctx) {

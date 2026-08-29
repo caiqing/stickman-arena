@@ -47,6 +47,7 @@
     this.prev = {};                // 上一帧输入（边沿检测）
     this.jumpUsed = false;
     this.chargeTickT = 0;
+    this.comboStage = 0; this.comboKind = null; this.lastAtkEnd = -10;
     this.invincible = false;
     this.dead = false;
     this.roundsWon = 0;
@@ -230,11 +231,20 @@
     // ---------- 攻击 ----------
     startAttack: function (kind) {
       var def = ATK[kind];
+      // 连招判定：同类攻击且距上次收招不超过 0.42s → 衔接下一段（最多 3 段）
+      var chain = this.comboKind === kind && (this.animT - this.lastAtkEnd < 0.42) && this.comboStage < 3;
+      this.comboStage = chain ? this.comboStage + 1 : 1;
+      this.comboKind = kind;
+      var stage = this.comboStage;
       this.state = 'attack'; this.stateT = 0;
-      this.atk = { kind: kind, def: def, id: ++this.atkId };
+      this.atk = { kind: kind, def: def, id: ++this.atkId, stage: stage };
       this.atkT = 0; this.hitDone = false;
       var s = this.spdMult;
       this.atk.timing = { startup: def.startup / s, active: def.active / s, recover: def.recover / s };
+      // 段位加成：段2 伤害×1.15；段3 伤害×1.45、击退×1.9、主动前冲追击
+      this.atk.dmgMul = stage >= 3 ? 1.45 : stage === 2 ? 1.15 : 1;
+      this.atk.kbMul = stage >= 3 ? 1.9 : stage === 2 ? 1.2 : 1;
+      this.atk.lunge = (stage === 3 && kind === 'light') ? 1 : (stage >= 2 && kind === 'heavy') ? 1 : 0;
       this.sfxPlayed = false;
     },
 
@@ -245,6 +255,8 @@
 
       if (this.atkT >= tm.startup && this.atkT < tm.startup + tm.active) {
         if (!this.sfxPlayed) { battle.sfx(a.def.sfx); this.sfxPlayed = true; }
+        // 连招段3 主动前冲追击
+        if (a.lunge) this.x += this.facing * 320 * dt;
         // 命中判定
         if (!this.hitDone) {
           var hb = this.attackHitbox();
@@ -253,8 +265,8 @@
               hb.y < hurt.y + hurt.h && hb.y + hb.h > hurt.y) {
             this.hitDone = true;
             battle.onHit(this, opp, {
-              dmg: a.def.dmg * this.dmgMult,
-              kb: a.def.kb, hitstun: a.def.hitstun,
+              dmg: a.def.dmg * this.dmgMult * (a.dmgMul || 1),
+              kb: a.def.kb * (a.kbMul || 1), hitstun: a.def.hitstun,
               launch: a.def.launch || 0,
               heavy: a.kind === 'heavy', hitSfx: a.def.hitSfx
             });
@@ -262,6 +274,7 @@
         }
       }
       if (this.atkT >= total) {
+        this.lastAtkEnd = this.animT;
         this.setIdle();
         this.atk = null;
       }
@@ -482,9 +495,16 @@
       if (this.state === 'attack' && this.atk) {
         var tm = this.atk.timing, at = this.atkT;
         var heavy = this.atk.kind === 'heavy';
+        var stg = this.atk.stage || 1;
         if (at < tm.startup) return { pose: heavy ? 'kickW' : 'punchW', t: 0 };
-        if (at < tm.startup + tm.active) return { pose: heavy ? 'kickX' : 'punchX', t: 0 };
-        return { pose: heavy ? 'kickW' : 'punchW', t: 0 };
+        if (at < tm.startup + tm.active) {
+          var xp = heavy ? 'kickX'
+            : stg >= 3 ? 'upper'
+            : stg === 2 ? 'punchB'
+            : 'punchX';
+          return { pose: xp, t: 0 };
+        }
+        return { pose: heavy ? 'kickX' : 'punchW', t: 0 };
       }
       if (this.state === 'block') return { pose: 'block' };
       if (this.state === 'dash') return { pose: 'fall' };

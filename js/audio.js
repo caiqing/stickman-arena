@@ -103,8 +103,67 @@
       lead: rep(bar(['G4', 0, 'C5', 0, 'E5', 0, 'G5', 0, 'E5', 0, 'C5', 0, 'F5', 0, 'E5', 'D5',
                      'E5', 0, 'C5', 0, 'G4', 0, 'E5', 0, 'D5', 0, 'B4', 0, 'C5', 0, 0, 0]), 2),
       drums: rep(bar(['k', 0, 'k', 0, 'k', 0, 'k', 0]), 8),
-      leadVol: 0.16
+      leadVol: 0.16,
+      name: '登基大典', mood: '喜庆'
+    },
+    horror: {
+      bpm: 63, wave: 'sawtooth', bassWave: 'sine',
+      bass: rep(bar(['C2', 0, 0, 0, 0, 0, 'C2', 0, 'Db2', 0, 0, 0, 0, 0, 'Db2', 0]), 2),
+      lead: rep(bar([0, 0, 0, 0, 'Ab4', 0, 0, 0, 0, 0, 0, 0, 'G4', 0, 'Gb4', 0]), 2),
+      drums: rep(bar([0, 0, 0, 0, 0, 0, 0, 0, 'k', 0, 0, 0, 0, 0, 0, 0]), 2),
+      leadVol: 0.09,
+      name: '暗夜低语', mood: '恐怖'
+    },
+    tense: {
+      bpm: 148, wave: 'square', bassWave: 'sawtooth',
+      bass: rep(bar(['E2', 'E2', 0, 'E2', 'E2', 0, 'E2', 0, 'E2', 'E2', 0, 'E2', 'G2', 0, 'F2', 0]), 2),
+      lead: rep(bar(['B4', 0, 0, 'C5', 0, 0, 'B4', 0, 'E5', 0, 0, 'D5', 0, 'B4', 0, 0]), 2),
+      drums: rep(bar(['k', 'h', 'k', 'h', 's', 0, 'h', 0, 'k', 'h', 'k', 'h', 's', 0, 'h', 'h']), 2),
+      leadVol: 0.11,
+      name: '暗流涌动', mood: '紧张'
+    },
+    wuxia: {
+      bpm: 84, wave: 'triangle', bassWave: 'sine',
+      bass: rep(bar(['C2', 0, 0, 0, 'G2', 0, 0, 0, 'A2', 0, 0, 0, 'E2', 0, 'G2', 0]), 2),
+      lead: rep(bar(['C4', 0, 'D4', 'E4', 0, 'G4', 0, 'A4', 'C5', 0, 'A4', 'G4', 'E4', 0, 'D4', 0]), 2),
+      drums: rep(bar(['h', 0, 0, 0, 0, 'h', 0, 0, 'h', 0, 0, 0, 'h', 0, 0, 0]), 2),
+      leadVol: 0.18,
+      name: '水墨江湖', mood: '武侠'
+    },
+    epic: {
+      bpm: 138, wave: 'sawtooth', bassWave: 'sawtooth',
+      bass: rep(bar(['A2', 'A2', 0, 'A2', 0, 'A2', 'A2', 0, 'F2', 'F2', 0, 'F2', 'G2', 0, 'G2', 0]), 2),
+      lead: rep(bar(['A4', 0, 'C5', 0, 'E5', 0, 'D5', 'C5', 0, 'B4', 0, 'C5', 'E5', 0, 'D5', 0]), 2),
+      drums: rep(bar(['k', 0, 'h', 'k', 's', 0, 'h', 'h', 'k', 0, 'h', 'k', 's', 0, 'h', 'h']), 2),
+      leadVol: 0.14,
+      name: '决战时刻', mood: '史诗'
     }
+  };
+
+  // 曲目名称与氛围标签
+  var TRACK_META = {
+    menu:    { name: '悠闲时光', mood: '悠闲' },
+    battle:  { name: '动感对决', mood: '动感' },
+    boss:    { name: '强敌压境', mood: '紧张' },
+    dance1:  { name: '欢快节拍', mood: '欢快' },
+    dance2:  { name: '慢摇律动', mood: '放松' },
+    dance3:  { name: '疾速狂舞', mood: '动感' },
+    boat:    { name: '轻舟荡漾', mood: '悠闲' },
+    fly:     { name: '展翅翱翔', mood: '广阔' },
+    ceremony:{ name: '登基大典', mood: '喜庆' },
+    horror:  { name: '暗夜低语', mood: '恐怖' },
+    tense:   { name: '暗流涌动', mood: '紧张' },
+    wuxia:   { name: '水墨江湖', mood: '武侠' },
+    epic:    { name: '决战时刻', mood: '史诗' }
+  };
+  Object.keys(TRACK_META).forEach(function (id) {
+    if (TRACKS[id]) { TRACKS[id].name = TRACK_META[id].name; TRACKS[id].mood = TRACK_META[id].mood; }
+  });
+
+  // 场景装饰主题 → 默认背景音乐（自动配乐）
+  var STAGE_MUSIC = {
+    dojo: 'battle', bamboo: 'wuxia', desert: 'epic',
+    snow: 'tense', volcano: 'boss', castle: 'horror'
   };
 
   // ---------- 初始化 ----------
@@ -233,6 +292,23 @@
     trackInfo: function (name) {
       var tr = TRACKS[name];
       return tr ? { bpm: tr.bpm, steps: tr.bass.length } : null;
+    },
+    // 全部曲目列表（名称/氛围）
+    trackList: function () {
+      return Object.keys(TRACKS).map(function (id) {
+        return { id: id, name: TRACKS[id].name || id, mood: TRACKS[id].mood || '' };
+      });
+    },
+    // 场景自动配乐：按场景装饰主题匹配氛围曲目
+    musicForStage: function (stageId) {
+      var st = null;
+      if (SG.DATA && SG.DATA.STAGES) {
+        for (var i = 0; i < SG.DATA.STAGES.length; i++) {
+          if (SG.DATA.STAGES[i].id === stageId) { st = SG.DATA.STAGES[i]; break; }
+        }
+      }
+      var map = { dojo: 'battle', bamboo: 'wuxia', desert: 'epic', snow: 'tense', volcano: 'boss', castle: 'horror' };
+      return (st && map[st.deco]) || 'battle';
     }
   };
 

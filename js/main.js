@@ -47,7 +47,7 @@
       saveJSON('sga_stars', this.storyStars);
     },
     saveSettings: function () {
-      saveJSON('sga_settings', SG.Audio.getVolumes());
+      saveJSON('sga_settings', game.settings);   // 完整保存（含虚拟按键/背景音乐偏好）
     },
 
     aiByDifficulty: [
@@ -311,10 +311,24 @@
   game.startUltDemo = function (custom) { game.startMoveShow(custom); };
   game.stopUltDemo = game.stopMoveShow;
   if (!game.settings) {
-    game.settings = { master: 0.8, music: 0.55, sfx: 0.9, touch: 'auto' };
+    game.settings = { master: 0.8, music: 0.55, sfx: 0.9, touch: 'auto', bgm: 'auto' };
   }
   if (game.settings.touch === undefined) game.settings.touch = 'auto';
+  if (game.settings.bgm === undefined) game.settings.bgm = 'auto';
   SG.Audio.setVolumes(game.settings);
+
+  // 背景音乐偏好路由：auto=按场景自动配乐；指定曲目=全局覆盖；off=关闭
+  // （休闲小游戏使用专属曲目，不受覆盖影响——跳舞节奏依赖乐曲本身）
+  (function () {
+    var origMusic = SG.Audio.music.bind(SG.Audio);
+    var CASUAL_TRACKS = ['dance1', 'dance2', 'dance3', 'boat', 'fly'];
+    SG.Audio.music = function (name) {
+      var pref = game.settings.bgm || 'auto';
+      if (pref === 'off') { SG.Audio.stopMusic(); return; }
+      if (pref !== 'auto' && CASUAL_TRACKS.indexOf(name) < 0) { origMusic(pref); return; }
+      origMusic(name);
+    };
+  })();
 
   // ================= 输入 =================
   var keys = {};
@@ -754,8 +768,8 @@
     game.paused = false;
     hideUI();
     if (game.autoPilot) battle.p1.ctrl = cloneCustom(game.aiTopParams);   // 托管生效
-    SG.Audio.music(cfg.mode === 'story' && cfg.storyLevel && cfg.storyLevel.finalBoss ? 'boss' :
-      cfg.mode === 'story' ? 'boss' : 'battle');
+    // 背景音乐按场景氛围自动配置（竹林武侠/大漠史诗/雪山紧张/王城恐怖…），用户可在设置中自选
+    SG.Audio.music(SG.Audio.musicForStage(cfg.stage));
     // 录制开始
     SG.Replay.start({
       modeLabel: { story: '故事·' + (cfg.storyLevel ? cfg.storyLevel.name : ''), versus: '双人对战', tournament: '武林大会' }[cfg.mode],

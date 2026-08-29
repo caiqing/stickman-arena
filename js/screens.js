@@ -1044,6 +1044,10 @@
         if (thumb) c.appendChild(thumb);
         else c.appendChild(el('div', 'stage-rand', '🎲'));
         c.appendChild(el('div', 'stage-nm', nm));
+        var mid = SG.Audio.musicForStage(id);
+        var meta = null;
+        SG.Audio.trackList().forEach(function (t2) { if (t2.id === mid) meta = t2; });
+        if (meta) c.appendChild(el('div', 'stage-bgm', '🎵 ' + meta.name));
         if (deletable) {
           var x = el('div', 'stage-del', '✕');
           x.title = '删除该场景';
@@ -1183,6 +1187,34 @@
       var g = SG.game;
       var panel = el('div', 'panel');
       panel.appendChild(el('h2', 'title', '⚙️ 设置'));
+
+      // 背景音乐：自动按场景 / 任选曲目（点击即试听）/ 关闭
+      var bgmLabel = el('div', 'opt-label', '背景音乐');
+      var bgmRow = el('div');
+      bgmRow.style.marginBottom = '10px';
+      bgmRow.appendChild(bgmLabel);
+      var bgmWrap = el('div', 'bgm-list');
+      var bgmBtns = [];
+      var curBgm = g.settings.bgm || 'auto';
+      var bgmOpts = [['auto', '🎵 自动（按场景配乐）']]
+        .concat(SG.Audio.trackList().map(function (t2) { return [t2.id, '🎵 ' + t2.name + '（' + t2.mood + '）']; }))
+        .concat([['off', '🔇 关闭']]);
+      bgmOpts.forEach(function (o) {
+        var b = btn(o[1], function () {
+          g.settings.bgm = o[0];
+          g.saveSettings();
+          bgmBtns.forEach(function (x) { x.classList.remove('primary'); });
+          b.classList.add('primary');
+          if (o[0] === 'off') SG.Audio.stopMusic(); else SG.Audio.music(o[0]);   // 即时试听
+          SG.Audio.sfx('click');
+        }, 'small');
+        b.classList.toggle('primary', curBgm === o[0]);
+        bgmBtns.push(b);
+        bgmWrap.appendChild(b);
+      });
+      bgmRow.appendChild(bgmWrap);
+      panel.appendChild(bgmRow);
+      panel.appendChild(el('div', 'tiny', '「自动」会依据场景氛围切换：竹林武侠、王城恐怖、雪山紧张、大漠史诗…休闲小游戏使用各自专属乐曲。'));
       var vols = SG.Audio.getVolumes();
       [['master', '总音量'], ['music', '音乐音量'], ['sfx', '音效音量']].forEach(function (row) {
         var r = el('div', 'opt-row');

@@ -304,6 +304,28 @@
     game.saveProfile();
   }
 
+  // ---------- 金币与商城 ----------
+  game.coins = loadJSON('sga_coins', 500);
+  game.ownedItems = loadJSON('sga_owned', {});
+  game.addCoins = function (n) {
+    game.coins = Math.max(0, game.coins + n);
+    saveJSON('sga_coins', game.coins);
+  };
+  game.hasItem = function (id) { return !!game.ownedItems[id]; };
+  game.buyItem = function (id) {
+    var item = SG.DATA.SHOP_ITEMS.find(function (s) { return s.id === id; });
+    if (!item || game.coins < item.price || game.hasItem(id)) return false;
+    game.coins -= item.price;
+    game.ownedItems[id] = true;
+    saveJSON('sga_coins', game.coins);
+    saveJSON('sga_owned', game.ownedItems);
+    return true;
+  };
+  game.enterShop = function () {
+    game.state = 'menu';
+    SG.UI.show('shop');
+  };
+
   // ---------- 修炼模式：技能解锁与道场 ----------
   game.skills = loadJSON('sga_skills', {});
   game.hasSkill = function (k) { return !!game.skills[k]; };
@@ -509,6 +531,7 @@
     game.storyProgress = Math.max(game.storyProgress, lv.id);
     game.saveProgress();
     SG.Board.add({ name: game.profile.name, mode: '故事', score: score, detail: '第' + lv.id + '关 · ' + stars + '星' + (game.autoPilot ? ' · 托管' : '') });
+    game.addCoins(100 + stars * 100);
 
     var rewards = [];
     if (game.storyProgress > wasProgress) {
@@ -574,6 +597,7 @@
     var hpPct = winner.hpLeft / winner.maxHp;
     var score = 600 + Math.round(hpPct * 600) + winner.maxCombo * 20;
     var aiJoined = game.versus.p1auto || game.versus.p2cpu || game.autoPilot;
+    game.addCoins(200);
     SG.Board.add({ name: winner.name, mode: '双人对战', score: score,
       detail: '胜' + winner.roundsWon + '回合 · 最高' + winner.maxCombo + '连击' + (aiJoined ? ' · 含AI' : '') });
     SG.Audio.music('menu');

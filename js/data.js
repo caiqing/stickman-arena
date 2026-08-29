@@ -372,6 +372,33 @@
     }
   ];
 
+  // ---------- 商城：付费强化道具 ----------
+  var SHOP_ITEMS = [
+    // 挂件（一次购买，装备后永久生效）
+    { id: 'iron_wall',   type: 'pendant', price: 500,
+      name: '铁壁挂件', icon: '🔵',
+      desc: '伤害低于 5 点的攻击完全免疫', effect: { immuneBelow: 5 } },
+    { id: 'diamond_wall', type: 'pendant', price: 1500,
+      name: '金刚挂件', icon: '💠', requires: 'iron_wall',
+      desc: '伤害低于 12 点的攻击完全免疫', effect: { immuneBelow: 12 } },
+    // 超级装备（一次购买，装备后大幅增强）
+    { id: 'exo_titan',   type: 'super', price: 3000,
+      name: '外骨骼·泰坦', icon: '🦾',
+      desc: '攻击力 ×2.0 · 伤害 ×2.0 · 解锁强化大招「泰坦轰击」',
+      effect: { atkMul: 2.0, dmgMul: 2.0, ultOverride: 'titan_slam' } },
+    { id: 'exo_falcon',  type: 'super', price: 2500,
+      name: '外骨骼·猎鹰', icon: '🦅',
+      desc: '攻速 ×1.8 · 移速 ×1.5 · 弹道加速',
+      effect: { spdMul: 1.8, moveMul: 1.5 } },
+    // 法术卷轴（一次购买，战斗中主动释放，带冷却）
+    { id: 'scroll_gold',  type: 'scroll', price: 300,
+      name: '金身卷轴', icon: '📜',
+      desc: '3 秒无敌金身，物理+法术全免', effect: { duration: 3, cooldown: 30 } },
+    { id: 'scroll_berserk', type: 'scroll', price: 250,
+      name: '狂暴卷轴', icon: '💢',
+      desc: '5 秒攻击力 ×3.0', effect: { duration: 5, cooldown: 45, atkMul: 3.0 } }
+  ];
+
   // ---------- 修炼模式：可习得的武学（解锁后实战永久生效） ----------
   var TRAININGS = [
     { id: 'chain3', icon: '👊', name: '影三连 · 拳', need: 1,
@@ -418,7 +445,7 @@
   SG.DATA = {
     COLORS: COLORS, HAIRS: HAIRS, HATS: HATS, CLOTHES: CLOTHES,
     WEAPONS: WEAPONS, GEARS: GEARS, STAGES: STAGES, STORY: STORY,
-    TRAININGS: TRAININGS, FAMILY_PRESETS: FAMILY_PRESETS,
+    TRAININGS: TRAININGS, SHOP_ITEMS: SHOP_ITEMS, FAMILY_PRESETS: FAMILY_PRESETS,
     stageById: function (id) { return firstBy(STAGES, 'id', id) || STAGES[0]; },
     weaponById: function (id) { return firstBy(WEAPONS, 'id', id) || WEAPONS[0]; },
     gearById: function (id) { return firstBy(GEARS, 'id', id) || GEARS[0]; },

@@ -55,7 +55,15 @@
     this.invincible = false;
     this.dead = false;
     this.roundsWon = 0;
-    this._autoCd = 0;              // 全自动武器开火冷却
+    this._autoCd = 0;
+    // 付费强化
+    this.pendantThreshold = 0;
+    if (custom.pendant === 'iron_wall') this.pendantThreshold = 5;
+    if (custom.pendant === 'diamond_wall') this.pendantThreshold = 12;
+    this._superAtk = 1; this._superDmg = 1; this._superSpd = 1;
+    if (custom.super_eq === 'exo_titan') { this._superAtk = 2.0; this._superDmg = 2.0; }
+    if (custom.super_eq === 'exo_falcon') { this._superSpd = 1.8; this.moveSpeed *= 1.5; }
+    this.scrollInvT = 0; this.scrollAtkT = 0; this.scrollCd = 0;              // 全自动武器开火冷却
   }
 
   Fighter.prototype = {
@@ -63,6 +71,8 @@
     update: function (dt, input, opp, battle) {
       this.animT += dt;
       this.stateT += dt;
+      if (this.scrollInvT > 0) this.scrollInvT -= dt;
+      if (this.scrollAtkT > 0) this.scrollAtkT -= dt;
       if (this.dashCd > 0) this.dashCd -= dt;
 
       var p = this.prev || {};
@@ -306,7 +316,7 @@
               this.hitDone = true;
               var lsM = lsMul(this);
               battle.onHit(this, opp, {
-                dmg: a.def.dmg * this.dmgMult * (a.dmgMul || 1) * lsM,
+                dmg: a.def.dmg * this.dmgMult * (a.dmgMul || 1) * (this._superDmg || 1) * (this.scrollAtkT > 0 ? 3 : 1) * lsM,
                 kb: a.def.kb * (a.kbMul || 1), hitstun: a.def.hitstun,
                 launch: a.def.launch || 0,
                 heavy: a.kind === 'heavy', hitSfx: a.def.hitSfx
@@ -340,6 +350,17 @@
     // ---------- 受击 ----------
     takeHit: function (info, battle) {
       if (this.state === 'ko' || this.invincible) return false;
+      // 挂件免疫：低于阈值的伤害完全免疫
+      if (this.pendantThreshold > 0 && info.dmg < this.pendantThreshold && !info.isUlt) {
+        battle.dmgNums.push({ x: this.x, y: this.y - 200, val: '免疫!', life: 0.8 });
+        battle.sfx('block');
+        return false;
+      }
+      // 卷轴金身
+      if (this.scrollInvT > 0) {
+        battle.dmgNums.push({ x: this.x, y: this.y - 200, val: '金身!', life: 0.6 });
+        return false;
+      }
       // 面向攻击者才算格挡
       var blocking = this.state === 'block' && this.onGround &&
         Math.sign(info.fromX - this.x) === this.facing;

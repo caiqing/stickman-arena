@@ -106,7 +106,7 @@
 
     init: function (root) {
       this.root = root;
-      var names = ['title', 'roster', 'picker', 'stageDesigner', 'training', 'custom', 'storyMap', 'dialogue', 'versusSetup',
+      var names = ['title', 'roster', 'picker', 'stageDesigner', 'training', 'shop', 'custom', 'storyMap', 'dialogue', 'versusSetup',
         'tournamentSetup', 'bracket', 'casualHub', 'leaderboard', 'replays', 'share',
         'settings', 'help', 'result', 'pause'];
       var self = this;
@@ -1239,6 +1239,50 @@
       panel.appendChild(br);
       s.appendChild(panel);
       this.show('stageDesigner');
+    },
+
+    // ================= 商城 =================
+    refresh_shop: function () {
+      var s = this.screens.shop;
+      s.className = 'screen solid';
+      s.innerHTML = '';
+      var g = SG.game;
+      var panel = el('div', 'panel');
+      panel.appendChild(el('h2', 'title', '🛒 武林商城'));
+      panel.appendChild(el('div', 'tiny', '赢取金币，购买强力挂件与超级装备！金币来源：故事通关、对战获胜、大会名次。'));
+
+      var coinRow = el('div', 'opt-row');
+      coinRow.appendChild(el('div', 'opt-label', '金币'));
+      coinRow.appendChild(el('div', 'pname', '🪙 ' + g.coins));
+      panel.appendChild(coinRow);
+
+      var grid = el('div', 'shop-grid');
+      SG.DATA.SHOP_ITEMS.forEach(function (item) {
+        var owned = g.hasItem(item.id);
+        var canBuy = !owned && g.coins >= item.price;
+        var card = el('div', 'shop-card' + (owned ? ' owned' : ''));
+        card.appendChild(el('div', 'shop-icon', item.icon));
+        card.appendChild(el('div', 'shop-nm', item.name));
+        card.appendChild(el('div', 'shop-desc', item.desc));
+        if (item.requires && !g.hasItem(item.requires)) {
+          card.appendChild(el('div', 'shop-req', '🔒 需先购买前置'));
+        } else if (owned) {
+          card.appendChild(el('div', 'shop-owned', '✔ 已拥有'));
+        } else {
+          card.appendChild(el('div', 'shop-price', '🪙 ' + item.price));
+          var buyBtn = btn('购买', function () {
+            if (g.buyItem(item.id)) { SG.Audio.sfx('unlock'); UI.refresh_shop(); UI.show('shop'); }
+          }, 'small primary');
+          card.appendChild(buyBtn);
+        }
+        grid.appendChild(card);
+      });
+      panel.appendChild(grid);
+
+      var br = el('div', 'btn-row');
+      br.appendChild(btn('返回主菜单', function () { UI.show('title'); }));
+      panel.appendChild(br);
+      s.appendChild(panel);
     },
 
     // ================= 设置 =================

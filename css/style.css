@@ -327,6 +327,17 @@ input[type=range] { accent-color: #f5b942; width: 200px; }
 .vs-ctrl-label { font-size: 12px; color: #9fb0d8; margin-bottom: 5px; }
 .vrow2 { display: flex; gap: 8px; flex-wrap: wrap; }
 
+/* ---- 商城 ---- */
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin: 12px 0; }
+.shop-card { background: #1a1e33; border: 1px solid #3a4266; border-radius: 14px; padding: 14px 10px; text-align: center; }
+.shop-card.owned { border-color: #4d7a4d; background: #1a2a1a; }
+.shop-icon { font-size: 42px; margin-bottom: 6px; }
+.shop-nm { color: #ffe9a8; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.shop-desc { color: #9aa3c0; font-size: 12px; line-height: 1.5; margin-bottom: 8px; min-height: 36px; }
+.shop-price { color: #ffd34d; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.shop-owned { color: #8fe08f; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.shop-req { color: #7c86a8; font-size: 12px; margin-bottom: 6px; }
+
 /* ---- 移动端虚拟按键 ---- */
 #game { touch-action: none; }
 body { overscroll-behavior: none; }

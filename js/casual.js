@@ -32,10 +32,18 @@
     { id: 'dance3', name: '疾速狂舞', bpm: 145, dur: 45 }
   ];
 
+  // 节奏跳舞难度：speed=卡片下落速度(px/s)；perfect/good=判定窗口(秒)；half=半拍追加音符概率
+  var DANCE_DIFFS = [
+    { id: 'easy',   name: '简单', speed: 340, perfect: 0.13, good: 0.26, half: 0.12 },
+    { id: 'normal', name: '普通', speed: 520, perfect: 0.09, good: 0.20, half: 0.28 },
+    { id: 'hard',   name: '困难', speed: 720, perfect: 0.07, good: 0.15, half: 0.45 }
+  ];
+
   // ============ 1. 节奏跳舞 ============
-  function Dance(custom, song) {
+  function Dance(custom, song, diff) {
     this.custom = custom;
     this.song = song;
+    this.diff = diff || DANCE_DIFFS[1];
     this.musicTrack = song.id;
     this.time = 0;
     this.score = 0;
@@ -56,13 +64,14 @@
 
   Dance.prototype.makeChart = function () {
     var notes = [], beat = 60 / this.song.bpm;
+    var halfP = this.diff.half;
     var nBeats = Math.floor(this.song.dur / beat);
     for (var i = 4; i < nBeats; i++) {
       var t = i * beat;
       if (i % 4 === 0 || Math.random() < 0.82) {
         notes.push({ t: t, lane: Math.floor(Math.random() * 4), state: 0 });
       }
-      if (Math.random() < 0.28) {
+      if (Math.random() < halfP) {
         notes.push({ t: t + beat / 2, lane: Math.floor(Math.random() * 4), state: 0 });
       }
     }
@@ -94,6 +103,7 @@
     this.prev = Object.assign({}, inp);
 
     // 判定
+    var wPerfect = this.diff.perfect, wGood = this.diff.good;
     for (var i = 0; i < this.notes.length; i++) {
       var n = this.notes[i];
       if (n.state !== 0) continue;
@@ -101,8 +111,8 @@
       for (var l = 0; l < 4; l++) {
         if (e[this.laneKeys[l]]) {
           var diff = Math.abs(n.t - this.time);
-          if (n.lane === l && diff < 0.2) {
-            var perfect = diff < 0.09;
+          if (n.lane === l && diff < wGood) {
+            var perfect = diff < wPerfect;
             n.state = perfect ? 2 : 3;
             this.counts[perfect ? 'perfect' : 'good']++;
             this.combo++;
@@ -120,7 +130,7 @@
     // 未击中 → miss
     for (var j = 0; j < this.notes.length; j++) {
       var m = this.notes[j];
-      if (m.state === 0 && this.time - m.t > 0.2) {
+      if (m.state === 0 && this.time - m.t > wGood) {
         m.state = 1;
         this.counts.miss++;
         this.combo = 0;
@@ -159,6 +169,7 @@
     this.result = {
       title: '舞蹈结束！', score: this.score,
       lines: [
+        '难度 ' + this.diff.name + ' · ' + this.song.name,
         'PERFECT × ' + this.counts.perfect,
         'GOOD × ' + this.counts.good,
         'MISS × ' + this.counts.miss,
@@ -205,7 +216,7 @@
     }
 
     // 音符
-    var speed = 520;
+    var speed = this.diff.speed;
     for (var n = 0; n < this.notes.length; n++) {
       var note = this.notes[n];
       if (note.state === 1) continue;             // miss 消失
@@ -798,10 +809,12 @@
 
   SG.Casual = {
     DANCE_SONGS: DANCE_SONGS,
-    create: function (type, custom, songId) {
+    DANCE_DIFFS: DANCE_DIFFS,
+    create: function (type, custom, songId, diffId) {
       if (type === 'dance') {
         var song = DANCE_SONGS.find(function (s) { return s.id === songId; }) || DANCE_SONGS[0];
-        return new Dance(custom, song);
+        var diff = DANCE_DIFFS.find(function (d) { return d.id === diffId; }) || DANCE_DIFFS[1];
+        return new Dance(custom, song, diff);
       }
       if (type === 'boat') return new Boat(custom);
       if (type === 'fly') return new Fly(custom);

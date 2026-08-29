@@ -422,6 +422,7 @@
     game.settings = { master: 0.8, music: 0.55, sfx: 0.9, touch: 'auto', bgm: 'auto', autoContinue: 0 };
   }
   if (game.settings.touch === undefined) game.settings.touch = 'auto';
+  if (game.settings.danceDiff === undefined) game.settings.danceDiff = 'normal';
   if (game.settings.bgm === undefined) game.settings.bgm = 'auto';
   if (game.settings.autoContinue === undefined) game.settings.autoContinue = 0;
   SG.Audio.setVolumes(game.settings);
@@ -443,12 +444,14 @@
   var keys = {};
   var P1_MAP = {
     KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
-    KeyJ: 'punch', KeyK: 'kick', KeyI: 'dash', KeyL: 'charge', KeyU: 'ult', Space: 'charge'
+    KeyJ: 'punch', KeyK: 'kick', KeyI: 'dash', KeyL: 'charge', KeyU: 'ult', Space: 'charge',
+    KeyO: 'scroll'
   };
   var P2_MAP = {
     ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
     Numpad1: 'punch', Numpad2: 'kick', Numpad3: 'dash', Numpad0: 'charge', NumpadEnter: 'ult',
-    Comma: 'punch', Period: 'kick', Slash: 'dash', Semicolon: 'charge', Quote: 'ult'
+    Comma: 'punch', Period: 'kick', Slash: 'dash', Semicolon: 'charge', Quote: 'ult',
+    Backslash: 'scroll'
   };
   var GAME_CODES = new Set(Object.keys(P1_MAP).concat(Object.keys(P2_MAP)));
 
@@ -802,7 +805,7 @@
   game.startCasual = function (type, songId) {
     var custom = cloneCustom(game.profile.storyCustom);
     custom.name = game.profile.name;
-    game.casual = SG.Casual.create(type, custom, songId);
+    game.casual = SG.Casual.create(type, custom, songId, game.settings.danceDiff);
     game.state = 'casual';
     game.paused = false;
     hideUI();

@@ -47,6 +47,9 @@
     aim: function () { // 远程武器瞄准：双臂前伸持械
       return P(0.12, 2, [1.32, 0.06], [1.18, 0.1], [0.32, -0.2], [-0.32, -0.26], 0);
     },
+    drawbow: function () { // 拉弓：前臂持弓伸直，后手拉弦至颊侧
+      return P(0.08, 2, [1.52, 0.0], [0.72, 0.95], [0.34, -0.18], [-0.3, -0.28], 0);
+    },
     aimFire: function () { // 射击后坐
       return P(0.02, 2, [1.38, 0.08], [1.24, 0.14], [0.32, -0.2], [-0.32, -0.26], -0.06);
     },
@@ -592,7 +595,7 @@
         break;
       }
       // ===== 现代武器 =====
-      case 'bow': {     // 长弓
+      case 'longbow': { // 长弓（武器 id 见 data.js WEAPONS）
         ctx.strokeStyle = '#a8793f'; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
         ctx.beginPath(); ctx.arc(8, -4, 34, -1.25, 1.25); ctx.stroke();
         ctx.strokeStyle = '#e8e8e8'; ctx.lineWidth = 1.5;

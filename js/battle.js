@@ -264,7 +264,8 @@
       var res = victim.takeHit({
         dmg: info.dmg, kb: info.kb, hitstun: info.hitstun,
         launch: info.launch, from: from, fromX: attacker.x,
-        hitSfx: info.hitSfx
+        hitSfx: info.hitSfx,
+        isUlt: info.isUlt, heavy: info.heavy, magic: info.magic
       }, this);
       if (!res) return;
       var key = attacker === this.p1 ? 'p1' : 'p2';
@@ -345,7 +346,8 @@
     spawnProjectile: function (owner, cfg) {
       this.projectiles.push({
         x: cfg.x, y: cfg.y, vx: cfg.vx, r: cfg.r || 14,
-        dmg: cfg.dmg, owner: owner, life: 2.2, type: cfg.type || 'fire'
+        dmg: cfg.dmg, owner: owner, life: 2.2, type: cfg.type || 'fire',
+        ult: !!cfg.ult   // 大招弹：重击结算；普攻弹：轻结算（可被格挡/挂件免疫正常防御）
       });
     },
 
@@ -365,16 +367,42 @@
         var px = Math.max(hurt.x, Math.min(p.x, hurt.x + hurt.w));
         var py = Math.max(hurt.y, Math.min(p.y, hurt.y + hurt.h));
         if ((px - p.x) * (px - p.x) + (py - p.y) * (py - p.y) <= p.r * p.r && target.state !== 'ko') {
+          // 攻守分级：大招弹按重击结算；普攻弹轻结算（近战轻拳同级）；
+          // 火球属法术（吃法袍/法盾减伤、穿透格挡），弹丸箭矢属物理
+          var magic = p.type === 'fire';
           this.onHit(p.owner, target, {
-            dmg: p.dmg, kb: 300, hitstun: 0.42, launch: -260,
-            heavy: true, magic: true, hitSfx: 'hitHeavy', isUlt: true
+            dmg: p.dmg,
+            kb: p.ult ? 300 : 150,
+            hitstun: p.ult ? 0.42 : 0.28,
+            launch: p.ult ? -260 : 0,
+            heavy: !!p.ult, magic: magic,
+            hitSfx: p.ult ? 'hitHeavy' : 'hit',
+            isUlt: !!p.ult
           });
-          this.spawnHitSparks(p.x, p.y, 14, true);
+          this.spawnHitSparks(p.x, p.y, p.ult ? 14 : 8, !!p.ult);
+          if (p.type === 'arrow') {
+            // 箭矢命中：沿飞行方向的金色刺击闪线
+            this.slashes.push({ type: 'streak', x: p.x, y: p.y,
+              ang: Math.atan2(p.vy || 0, p.vx), len: p.ult ? 92 : 58,
+              life: 0.18, max: 0.18, color: '#ffd97a' });
+          }
           this.projectiles.splice(i, 1);
           continue;
         }
         if (p.life <= 0 || p.x < 0 || p.x > W || p.y > H + 30) this.projectiles.splice(i, 1);
       }
+    },
+
+    // 灵宠近战扑咬：小额伤害 + 短硬直，不进连击/能量结算
+    onPetHit: function (pet, target, dmg, kb) {
+      if (target.state === 'ko') return;
+      var from = pet.x <= target.x ? 1 : -1;
+      var res = target.takeHit({
+        dmg: dmg, kb: kb, hitstun: 0.2,
+        from: from, fromX: pet.x, hitSfx: 'hit'
+      }, this);
+      if (res === 'parried') { pet.stunT = 0.8; return; }
+      if (res) this.spawnHitSparks(pet.x + pet.facing * 22, pet.y - 40, 6, false, '#ffd34d');
     },
 
     // 灵宠替主人挡投射物
@@ -384,7 +412,7 @@
         if (p.noHit || p.owner === owner) continue;
         var dx = p.x - pet.x, dy = p.y - (pet.y - 40);
         if (dx * dx + dy * dy < 45 * 45) {
-          pet.hp -= p.dmg;
+          pet.hp -= p.dmg * (1 - (pet.def.def || 0));   // def：宠物受击减伤
           pet.hurtT = 0.4;
           this.projectiles.splice(i, 1);
           this.spawnHitSparks(pet.x, pet.y - 30, 6, false, '#fff');
@@ -651,16 +679,43 @@
 
     drawProjectiles: function (ctx) {
       this.projectiles.forEach(function (p) {
-        // 弹道类：箭矢 / 子弹 / 狙击弹（按速度方向绘制）
-        if (p.type === 'arrow' || p.type === 'bullet' || p.type === 'sniper') {
+        // 弹道类：箭矢 / 子弹 / 狙击弹 / 宠物雷电（按速度方向绘制）
+        if (p.type === 'arrow' || p.type === 'bullet' || p.type === 'sniper' || p.type === 'petbolt') {
           ctx.save();
           ctx.translate(p.x, p.y);
           ctx.rotate(Math.atan2(p.vy || 0, p.vx));
           if (p.type === 'arrow') {
-            ctx.strokeStyle = '#d8c49a'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-            ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(8, 0); ctx.stroke();
-            ctx.fillStyle = '#e8e8e8';
-            ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(7, -4); ctx.lineTo(7, 4); ctx.closePath(); ctx.fill();
+            // 尾迹：大招箭更长更亮
+            var trailLen = p.ult ? 74 : 46;
+            var tr = ctx.createLinearGradient(-trailLen, 0, 10, 0);
+            tr.addColorStop(0, 'rgba(255,225,150,0)');
+            tr.addColorStop(1, p.ult ? 'rgba(255,220,130,0.8)' : 'rgba(232,214,170,0.55)');
+            ctx.strokeStyle = tr; ctx.lineWidth = p.ult ? 3.5 : 2.5; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(-trailLen, 0); ctx.lineTo(10, 0); ctx.stroke();
+            // 箭杆
+            ctx.strokeStyle = '#d8c49a'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(9, 0); ctx.stroke();
+            // 箭羽（两片红羽）
+            ctx.strokeStyle = '#e05555'; ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-18, 0); ctx.lineTo(-23, -5); ctx.moveTo(-18, 0); ctx.lineTo(-23, 5);
+            ctx.moveTo(-13, 0); ctx.lineTo(-18, -5); ctx.moveTo(-13, 0); ctx.lineTo(-18, 5);
+            ctx.stroke();
+            // 金属箭头
+            ctx.fillStyle = '#f2f6ff';
+            ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(8, -5); ctx.lineTo(8, 5); ctx.closePath(); ctx.fill();
+          } else if (p.type === 'petbolt') {
+            // 宠物雷电：紫色辉光 + 抖动锯齿电弧 + 弹头亮点
+            ctx.strokeStyle = 'rgba(156,92,224,0.3)'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(-24, 0); ctx.lineTo(2, 0); ctx.stroke();
+            ctx.strokeStyle = '#c9a0ff'; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.moveTo(-24, 0);
+            for (var zi = 1; zi <= 3; zi++) {
+              ctx.lineTo(-24 + 26 * zi / 3, zi === 3 ? 0 : Math.sin(this.time * 42 + zi * 5.1) * 5);
+            }
+            ctx.stroke();
+            ctx.fillStyle = '#e8d5ff';
+            ctx.beginPath(); ctx.arc(4, 0, 3, 0, 7); ctx.fill();
           } else if (p.type === 'sniper') {
             var sg3 = ctx.createLinearGradient(-110, 0, 30, 0);
             sg3.addColorStop(0, 'rgba(255,120,80,0)');

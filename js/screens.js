@@ -154,24 +154,43 @@
       panel.appendChild(el('h1', 'logo', '火柴人武林大会'));
       panel.appendChild(el('div', 'subtitle', 'STICKMAN KUNGFU ARENA · 墨水大陆武林传奇'));
       panel.appendChild(el('div', 'author', '👨‍👦 出品：Jawen & Papa'));
-      var menu = el('div', 'menu-list');
-      menu.style.margin = '0 auto';
       var g = SG.game;
-      menu.appendChild(btn('📖 故事模式 · 暗影危机', function () { g.enterStory(); }, 'primary'));
-      menu.appendChild(btn('⚔️ 双人对战', function () { g.enterVersus(); }));
-      menu.appendChild(btn('🏆 武林大会 · 家庭争霸赛', function () { g.enterTournament(); }));
-      menu.appendChild(btn('🎮 休闲中心', function () { g.enterCasual(); }));
-      menu.appendChild(btn('🧘 修炼模式', function () { g.enterTraining(); }));
-      menu.appendChild(btn('🎭 人物设定', function () { g.enterRoster(); }));
-      menu.appendChild(btn('🎬 录像回放', function () { UI.show('replays'); }));
-      menu.appendChild(btn('🏅 评分榜', function () { UI.show('leaderboard'); }));
-      var row2 = el('div', 'btn-row');
-      row2.appendChild(btn('操作说明', function () { UI.show('help'); }, 'small'));
-      row2.appendChild(btn('设置', function () { UI.show('settings'); }, 'small'));
-      menu.appendChild(row2);
-      panel.appendChild(menu);
+
+      // 金币提示
+      var coinHint = el('div', 'coin-hint', '🪙 金币 ' + g.coins);
+      panel.appendChild(coinHint);
+
+      // 核心玩法：2×2 大按钮
+      var sect1 = el('div', 'menu-section', '—— 开 战 ——');
+      panel.appendChild(sect1);
+      var grid = el('div', 'menu-grid');
+      grid.style.width = 'min(520px, 100%)';
+      grid.appendChild(btn('📖 故事模式', function () { g.enterStory(); }, 'primary'));
+      grid.appendChild(btn('⚔️ 双人对战', function () { g.enterVersus(); }));
+      grid.appendChild(btn('🏆 武林大会', function () { g.enterTournament(); }));
+      grid.appendChild(btn('🎮 休闲中心', function () { g.enterCasual(); }));
+      panel.appendChild(grid);
+
+      // 养成：小按钮行
+      var sect2 = el('div', 'menu-section', '—— 养 成 ——');
+      panel.appendChild(sect2);
+      var chips1 = el('div', 'chip-row');
+      chips1.appendChild(btn('🧘 修炼模式', function () { g.enterTraining(); }, 'small'));
+      chips1.appendChild(btn('🛒 武林商城', function () { g.enterShop(); }, 'small'));
+      chips1.appendChild(btn('🎭 人物设定', function () { g.enterRoster(); }, 'small'));
+      panel.appendChild(chips1);
+
+      // 更多：小按钮行
+      var chips2 = el('div', 'chip-row');
+      chips2.style.marginTop = '10px';
+      chips2.appendChild(btn('🎬 录像回放', function () { UI.show('replays'); }, 'small'));
+      chips2.appendChild(btn('🏅 评分榜', function () { UI.show('leaderboard'); }, 'small'));
+      chips2.appendChild(btn('操作说明', function () { UI.show('help'); }, 'small'));
+      chips2.appendChild(btn('设置', function () { UI.show('settings'); }, 'small'));
+      panel.appendChild(chips2);
+
       var hint = el('div', 'tiny', '首次进入请点击任意按钮以开启声音 · M 静音');
-      hint.style.marginTop = '22px';
+      hint.style.marginTop = '18px';
       panel.appendChild(hint);
       panel.style.marginTop = '20px';
       s.appendChild(panel);
@@ -287,6 +306,38 @@
       petRow.appendChild(petWrap);
       opts.appendChild(petRow);
 
+      // 商城道具装备栏：挂件（被动）/ 超级装备（被动）/ 卷轴（主动），仅显示已拥有
+      function ownedRow(label, typeName, fieldName) {
+        var row = el('div', 'opt-row');
+        row.appendChild(el('div', 'opt-label', label));
+        var w2 = el('div', 'color-dots');
+        var btns = [];
+        var items = [{ id: '', name: '无', icon: '🚫' }].concat(
+          SG.DATA.SHOP_ITEMS.filter(function (s) { return s.type === typeName; }));
+        items.forEach(function (it) {
+          var owned = it.id === '' || (SG.game.hasItem && SG.game.hasItem(it.id));
+          var d = el('div', 'color-dot');
+          d.style.cssText = 'width:42px;height:42px;font-size:20px;display:flex;align-items:center;justify-content:center;';
+          d.textContent = it.icon || '?';
+          d.title = owned ? (it.name || '无') + (it.how ? '：' + it.how : '') : (it.name || '') + '（未拥有，请先在商城购买）';
+          if ((custom[fieldName] || '') === it.id) d.classList.add('sel');
+          if (!owned) d.classList.add('locked');
+          else d.addEventListener('click', function () {
+            custom[fieldName] = it.id;
+            btns.forEach(function (x) { x.classList.remove('sel'); });
+            d.classList.add('sel');
+            SG.Audio.sfx('click');
+          });
+          btns.push(d);
+          w2.appendChild(d);
+        });
+        row.appendChild(w2);
+        return row;
+      }
+      opts.appendChild(ownedRow('挂件', 'pendant', 'pendant'));
+      opts.appendChild(ownedRow('超级装备', 'super', 'super_eq'));
+      opts.appendChild(ownedRow('卷轴', 'scroll', 'scroll'));
+
       var winfo = el('div', 'tiny');
       function refreshWinfo() {
         var w = SG.DATA.weaponById(custom.weapon);
@@ -295,6 +346,8 @@
           (w.id === 'fist' ? '<br>🥋 拳法双奥义：远距「升龙拳」，近身自动改出「咏春快拳」（可修炼解锁）' : '') +
           (w.id === 'fist' || w.ult2 ? '' : '') +
           (gr && gr.desc ? '<br>🎁 装备效果：' + gr.desc : '');
+        var sc = custom.scroll && SG.DATA.SHOP_ITEMS.find(function (s) { return s.id === custom.scroll; });
+        if (sc) winfo.innerHTML += '<br>📜 ' + sc.name + '：战斗中按 <b>O</b> 释放（冷却 ' + sc.effect.cooldown + ' 秒）';
       }
       refreshWinfo();
       opts.appendChild(winfo);
@@ -829,6 +882,21 @@
         card.appendChild(el('div', 'nm', c.nm));
         card.appendChild(el('div', 'desc', c.desc));
         if (c.type === 'dance') {
+          // 难度：影响卡片下落速度 / 判定窗口 / 音符密度
+          var diffRow = el('div', 'btn-row');
+          var diffBtns = [];
+          SG.Casual.DANCE_DIFFS.forEach(function (df) {
+            var b = btn(df.name, function () {
+              g.settings.danceDiff = df.id;
+              g.saveSettings();
+              diffBtns.forEach(function (x) { x.classList.remove('primary'); });
+              b.classList.add('primary');
+              SG.Audio.sfx('click');
+            }, 'small' + ((g.settings.danceDiff || 'normal') === df.id ? ' primary' : ''));
+            diffBtns.push(b);
+            diffRow.appendChild(b);
+          });
+          card.appendChild(diffRow);
           var songs = el('div', 'btn-row');
           SG.Casual.DANCE_SONGS.forEach(function (song) {
             songs.appendChild(btn(song.name, function () { g.startCasual('dance', song.id); }, 'small'));
@@ -1263,16 +1331,22 @@
         var card = el('div', 'shop-card' + (owned ? ' owned' : ''));
         card.appendChild(el('div', 'shop-icon', item.icon));
         card.appendChild(el('div', 'shop-nm', item.name));
+        // 类型徽章：主动技 / 被动技
+        var badge = el('div', 'shop-badge' + (item.usage === 'active' ? ' active' : ''));
+        badge.textContent = item.usage === 'active' ? '⚡ 主动技' : '🛡 被动技';
+        card.appendChild(badge);
         card.appendChild(el('div', 'shop-desc', item.desc));
+        if (item.how) card.appendChild(el('div', 'shop-how', item.how));
         if (item.requires && !g.hasItem(item.requires)) {
           card.appendChild(el('div', 'shop-req', '🔒 需先购买前置'));
         } else if (owned) {
-          card.appendChild(el('div', 'shop-owned', '✔ 已拥有'));
+          card.appendChild(el('div', 'shop-owned', '✔ 已拥有 · 装备：选人界面对应栏目'));
         } else {
           card.appendChild(el('div', 'shop-price', '🪙 ' + item.price));
           var buyBtn = btn('购买', function () {
             if (g.buyItem(item.id)) { SG.Audio.sfx('unlock'); UI.refresh_shop(); UI.show('shop'); }
           }, 'small primary');
+          buyBtn.disabled = !canBuy;
           card.appendChild(buyBtn);
         }
         grid.appendChild(card);

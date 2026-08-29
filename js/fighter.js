@@ -62,7 +62,10 @@
     if (custom.pendant === 'diamond_wall') this.pendantThreshold = 12;
     this._superAtk = 1; this._superDmg = 1; this._superSpd = 1;
     if (custom.super_eq === 'exo_titan') { this._superAtk = 2.0; this._superDmg = 2.0; }
-    if (custom.super_eq === 'exo_falcon') { this._superSpd = 1.8; this.moveSpeed *= 1.5; }
+    if (custom.super_eq === 'exo_falcon') {
+      this._superSpd = 1.8; this.moveSpeed *= 1.5;
+      this.spdMult = this.weapon.spd * this._superSpd;   // 出招速度同步加速
+    }
     this.scrollInvT = 0; this.scrollAtkT = 0; this.scrollCd = 0;              // 全自动武器开火冷却
   }
 
@@ -73,6 +76,7 @@
       this.stateT += dt;
       if (this.scrollInvT > 0) this.scrollInvT -= dt;
       if (this.scrollAtkT > 0) this.scrollAtkT -= dt;
+      if (this.scrollCd > 0) this.scrollCd -= dt;
       if (this.dashCd > 0) this.dashCd -= dt;
 
       var p = this.prev || {};
@@ -109,6 +113,9 @@
         this.prev = input;
         return;
       }
+
+      // ---- 法术卷轴 ----
+      if (pressed('scroll') && this.canAct()) { this.useScroll(battle); this.prev = input; return; }
 
       // ---- 大招释放 ----
       if (pressed('ult') && this.meter >= 100 && grounded && this.canAct()) {
@@ -286,27 +293,31 @@
       var a = this.atk, tm = a.timing;
       this.atkT += dt;
       var total = tm.startup + tm.active + tm.recover;
+      // 弓手重击：近身踢腿（近战判定），轻击才是拉弓射箭
+      var bowKick = this.weapon.id === 'longbow' && a.kind === 'heavy';
+      var meleeSwing = !this.weapon.ranged || bowKick;
 
       if (this.atkT >= tm.startup && this.atkT < tm.startup + tm.active) {
         if (!this.sfxPlayed) {
           // 远程武器：发射子弹/箭矢（重击 = 强化弹）
-          if (this.weapon.ranged) {
+          if (!meleeSwing) {
             var rd = this.weapon.ranged, hv = a.kind === 'heavy';
-            battle.sfx(hv ? 'shotBig' : 'shot');
+            battle.sfx(rd.sfx || (hv ? 'shotBig' : 'shot'));
             battle.spawnProjectile(this, {
               x: this.x + this.facing * 46, y: this.y - 95,
               vx: this.facing * rd.projSpd,
-              dmg: rd.dmg * (hv ? 1.7 : 1) * this.dmgMult * lsMul(this),
+              dmg: rd.dmg * (hv ? 1.7 : 1) * this.dmgMult * (this._superAtk || 1) * lsMul(this),
               r: rd.kind === 'sniper' ? 9 : 5, type: rd.kind
             });
+            if (rd.kind === 'arrow') battle.spawnHitSparks(this.x + this.facing * 52, this.y - 95, 3, false, '#ffe9b0');
           } else {
             battle.sfx(a.def.sfx);
-            battle.fx('weaponfx', this);
+            if (!bowKick) battle.fx('weaponfx', this);   // 弓手踢腿不带武器气浪
           }
           this.sfxPlayed = true;
         }
-        // 近战武器：连招段2/3 前冲 + 命中判定
-        if (!this.weapon.ranged) {
+        // 近战：连招段2/3 前冲 + 命中判定
+        if (meleeSwing) {
           if (a.lunge) this.x += this.facing * 900 * dt;
           if (!this.hitDone) {
             var hb = this.attackHitbox();
@@ -420,6 +431,26 @@
       }
     },
 
+    // ---------- 法术卷轴（商城主动技） ----------
+    useScroll: function (battle) {
+      var sid = this.custom.scroll;
+      if (!sid || this.state === 'ko') return false;
+      if (this.scrollCd > 0) {
+        battle.dmgNums.push({ x: this.x, y: this.y - 200, val: '冷却 ' + Math.ceil(this.scrollCd) + 's', life: 0.6 });
+        battle.sfx('block');
+        return false;
+      }
+      var def = SG.DATA.SHOP_ITEMS.find(function (s) { return s.id === sid; });
+      if (!def) return false;
+      this.scrollCd = def.effect.cooldown;
+      if (sid === 'scroll_gold') this.scrollInvT = def.effect.duration;
+      if (sid === 'scroll_berserk') this.scrollAtkT = def.effect.duration;
+      battle.sfx('ult');
+      battle.fx('ultready', this);
+      battle.dmgNums.push({ x: this.x, y: this.y - 210, val: def.name + '！', life: 1 });
+      return true;
+    },
+
     startUlt: function (opp, battle) {
       this.meter = 0;
       this.ultReadyNotified = false;
@@ -433,6 +464,11 @@
       if (ut === 'upper' && opp && canIpman && Math.abs(opp.x - this.x) < 165) {
         ut = 'ipman';
         uname = '咏春·日字冲拳';
+      }
+      // 外骨骼·泰坦：大招替换为「泰坦轰击」
+      if (this.custom.super_eq === 'exo_titan') {
+        ut = 'titan_slam';
+        uname = '泰坦轰击';
       }
       this.ult = { type: ut, t: 0, hits: 0, done: false, opp: opp, name: uname };
       battle.sfx('ult');
@@ -512,6 +548,31 @@
           }
           if (t > 0.9) this.endUlt(battle);
           break;
+        case 'titan_slam':   // 外骨骼·泰坦：跃起重砸，双重冲击
+          if (t > 0.3 && !u.done) {
+            u.done = true;
+            this.vy = 700;
+            battle.sfx('hitHeavy');
+          }
+          if (u.done && this.onGround && !u.landed) {
+            u.landed = true;
+            battle.fx('quake', this);
+            battle.shake(20, 0.6);
+            this.tryUltHit(opp, battle, { circle: 320, ground: true,
+              dmg: 42 * this.dmgMult * (this._superDmg || 1), once: true, kb: 460, launch: -420 });
+          }
+          if (u.landed && !u.wave2 && t > 0.15 + 0.001) {
+            u._w2T = (u._w2T === undefined ? 0.35 : u._w2T) - dt;
+            if (u._w2T <= 0) {
+              u.wave2 = true;
+              this.ultHitDone = false;   // 二段冲击允许再次结算
+              battle.fx('shockwave', this);
+              this.tryUltHit(opp, battle, { circle: 380, ground: true,
+                dmg: 18 * this.dmgMult * (this._superDmg || 1), once: true, kb: 300, launch: -260 });
+            }
+          }
+          if (t > 1.3) this.endUlt(battle);
+          break;
         case 'quake':
           if (t > 0.3 && !u.done) {
             u.done = true;
@@ -531,7 +592,7 @@
             u.done = true;
             battle.spawnProjectile(this, {
               x: this.x + this.facing * 40, y: this.y - 90,
-              vx: 640 * this.facing, dmg: 30 * this.dmgMult, r: 17, type: 'fire'
+              vx: 640 * this.facing, dmg: 30 * this.dmgMult, r: 17, type: 'fire', ult: true
             });
             battle.sfx('fire');
           }
@@ -578,7 +639,8 @@
             u._vT = 0.28;
             battle.sfx('arrow');
             battle.spawnProjectile(this, { x: this.x + this.facing * 50, y: this.y - 100,
-              vx: this.facing * 1000, dmg: 10 * this.dmgMult, r: 6, type: 'arrow' });
+              vx: this.facing * 1000, dmg: 10 * this.dmgMult, r: 6, type: 'arrow', ult: true });
+            battle.spawnHitSparks(this.x + this.facing * 56, this.y - 100, 5, false, '#ffe9b0');
           }
           if (t > 1.6) this.endUlt(battle);
           break;
@@ -587,7 +649,7 @@
             u.hits++;
             battle.sfx('shotBig');
             battle.spawnProjectile(this, { x: this.x + this.facing * 50, y: this.y - 95,
-              vx: this.facing * 1350, dmg: 12 * this.dmgMult, r: 6, type: 'bullet' });
+              vx: this.facing * 1350, dmg: 12 * this.dmgMult, r: 6, type: 'bullet', ult: true });
           }
           if (t > 1.3) this.endUlt(battle);
           break;
@@ -597,7 +659,7 @@
             this._spT = 0.1;
             battle.sfx('shot');
             battle.spawnProjectile(this, { x: this.x + this.facing * 50, y: this.y - 95 + (Math.random() - 0.5) * 26,
-              vx: this.facing * 1250, dmg: 3.2 * this.dmgMult, r: 4, type: 'bullet' });
+              vx: this.facing * 1250, dmg: 3.2 * this.dmgMult, r: 4, type: 'bullet', ult: true });
           }
           if (t > 1.6) this.endUlt(battle);
           break;
@@ -608,7 +670,7 @@
               ang: this.facing > 0 ? 0 : Math.PI, len: 1200, life: 0.25, max: 0.25, color: '#ff8a6a' });
             battle.sfx('shotBig'); battle.shake(10, 0.3);
             battle.spawnProjectile(this, { x: this.x + this.facing * 50, y: this.y - 95,
-              vx: this.facing * 2200, dmg: 45 * this.dmgMult, r: 9, type: 'sniper' });
+              vx: this.facing * 2200, dmg: 45 * this.dmgMult, r: 9, type: 'sniper', ult: true });
           }
           if (t > 1.3) this.endUlt(battle);
           break;
@@ -696,6 +758,7 @@
           return { pose: (u.hits % 2 ? 'punchB' : 'punchX'), t: 0 };
         }
         if (u && (u.type === 'spin')) return { pose: 'ult', t: t * 3 };
+        if (u && u.type === 'volley') return { pose: 'drawbow', t: 0 };   // 穿云箭雨：保持拉弓姿态
         if (u && u.type === 'fire') return { pose: 'charge', t: t };
         return { pose: 'ult', t: t };
       }
@@ -703,6 +766,17 @@
         var tm = this.atk.timing, at = this.atkT;
         var heavy = this.atk.kind === 'heavy';
         var stg = this.atk.stage || 1;
+        // 弓手：轻击全程拉弓射箭，重击为近身踢腿
+        if (this.weapon.id === 'longbow') {
+          if (heavy) return { pose: at < tm.startup ? 'kickW' : 'kickX', t: 0 };
+          return { pose: 'drawbow', t: 0 };
+        }
+        // 其他远程武器：蓄力瞄准 → 击发后坐 → 回瞄
+        if (this.weapon.ranged) {
+          if (at < tm.startup) return { pose: 'aim' };
+          if (at < tm.startup + tm.active) return { pose: 'aimFire' };
+          return { pose: 'aim' };
+        }
         if (at < tm.startup) return { pose: heavy ? 'kickW' : 'punchW', t: 0 };
         if (at < tm.startup + tm.active) {
           var xp = heavy ? 'kickX'
@@ -727,6 +801,7 @@
       if (this.state === 'charge') glow = 0.7;
       else if (this.meter >= 100) glow = 0.35 + Math.sin(this.animT * 8) * 0.15;
       if (this.state === 'ult') glow = 1;
+      if (this.scrollInvT > 0) glow = Math.max(glow, 0.85);   // 金身卷轴：金光罩体
 
       if (this.state === 'ult' && this.ult && this.ult.type === 'spin') {
         ctx.save();

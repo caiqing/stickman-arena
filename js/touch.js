@@ -94,6 +94,7 @@
     var r2 = div('vrow');
     r2.appendChild(btn('冲', 'dash', 'vsmall'));
     r2.appendChild(btn('蓄', 'charge', 'vsmall'));
+    r2.appendChild(btn('卷', 'scroll', 'vsmall'));
     var ult = btn('必', 'ult', 'vbig');
     ult.dataset.ult = '1';
     r2.appendChild(ult);

@@ -373,30 +373,42 @@
   ];
 
   // ---------- 商城：付费强化道具 ----------
+  // usage: 'passive' 被动（装备后自动生效） / 'active' 主动（战斗中手动释放，带冷却）
+  // how: 使用方式说明（商城卡片与选人界面展示）
   var SHOP_ITEMS = [
     // 挂件（一次购买，装备后永久生效）
-    { id: 'iron_wall',   type: 'pendant', price: 500,
+    { id: 'iron_wall',   type: 'pendant', price: 500, usage: 'passive',
       name: '铁壁挂件', icon: '🔵',
-      desc: '伤害低于 5 点的攻击完全免疫', effect: { immuneBelow: 5 } },
-    { id: 'diamond_wall', type: 'pendant', price: 1500,
+      desc: '伤害低于 5 点的攻击完全免疫（大招与终极技仍会命中）',
+      how: '被动技：选人界面「挂件」栏装备后自动生效，无需操作',
+      effect: { immuneBelow: 5 } },
+    { id: 'diamond_wall', type: 'pendant', price: 1500, usage: 'passive',
       name: '金刚挂件', icon: '💠', requires: 'iron_wall',
-      desc: '伤害低于 12 点的攻击完全免疫', effect: { immuneBelow: 12 } },
+      desc: '伤害低于 12 点的攻击完全免疫（大招与终极技仍会命中）',
+      how: '被动技：选人界面「挂件」栏装备后自动生效，无需操作',
+      effect: { immuneBelow: 12 } },
     // 超级装备（一次购买，装备后大幅增强）
-    { id: 'exo_titan',   type: 'super', price: 3000,
+    { id: 'exo_titan',   type: 'super', price: 3000, usage: 'passive',
       name: '外骨骼·泰坦', icon: '🦾',
-      desc: '攻击力 ×2.0 · 伤害 ×2.0 · 解锁强化大招「泰坦轰击」',
+      desc: '弹道攻击 ×2.0 · 近战伤害 ×2.0 · 大招替换为「泰坦轰击」（跃起重砸，双重冲击）',
+      how: '被动技：选人界面「超级装备」栏装备后自动生效；使用大招时自动改为「泰坦轰击」',
       effect: { atkMul: 2.0, dmgMul: 2.0, ultOverride: 'titan_slam' } },
-    { id: 'exo_falcon',  type: 'super', price: 2500,
+    { id: 'exo_falcon',  type: 'super', price: 2500, usage: 'passive',
       name: '外骨骼·猎鹰', icon: '🦅',
-      desc: '攻速 ×1.8 · 移速 ×1.5 · 弹道加速',
+      desc: '出招速度 ×1.8 · 移动速度 ×1.5',
+      how: '被动技：选人界面「超级装备」栏装备后自动生效，无需操作',
       effect: { spdMul: 1.8, moveMul: 1.5 } },
     // 法术卷轴（一次购买，战斗中主动释放，带冷却）
-    { id: 'scroll_gold',  type: 'scroll', price: 300,
+    { id: 'scroll_gold',  type: 'scroll', price: 300, usage: 'active',
       name: '金身卷轴', icon: '📜',
-      desc: '3 秒无敌金身，物理+法术全免', effect: { duration: 3, cooldown: 30 } },
-    { id: 'scroll_berserk', type: 'scroll', price: 250,
+      desc: '3 秒无敌金身，物理+法术全免',
+      how: '主动技：选人界面「卷轴」栏装备后，战斗中按 O（P2 为 \\）释放 · 冷却 30 秒',
+      effect: { duration: 3, cooldown: 30 } },
+    { id: 'scroll_berserk', type: 'scroll', price: 250, usage: 'active',
       name: '狂暴卷轴', icon: '💢',
-      desc: '5 秒攻击力 ×3.0', effect: { duration: 5, cooldown: 45, atkMul: 3.0 } }
+      desc: '5 秒攻击力 ×3.0',
+      how: '主动技：选人界面「卷轴」栏装备后，战斗中按 O（P2 为 \\）释放 · 冷却 45 秒',
+      effect: { duration: 5, cooldown: 45, atkMul: 3.0 } }
   ];
 
   // ---------- 修炼模式：可习得的武学（解锁后实战永久生效） ----------

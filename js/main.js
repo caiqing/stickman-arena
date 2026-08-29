@@ -940,11 +940,14 @@
   function update(dt) {
     game.menuT += dt;
     if (game.state === 'battle') {
-      var inp = readInputs();
-      game.battle.update(dt, inp);
-      // 记录实际生效的输入（CPU 输入由战斗内部生成）
-      if (game.battle.lastInputs && SG.Replay.recorder) {
-        SG.Replay.tick(game.battle.lastInputs.p1, game.battle.lastInputs.p2);
+      var bt = game.battle;
+      if (bt) {
+        var inp = readInputs();
+        bt.update(dt, inp);
+        // 记录实际生效的输入（CPU 输入由战斗内部生成）
+        if (bt.lastInputs && SG.Replay.recorder) {
+          SG.Replay.tick(bt.lastInputs.p1, bt.lastInputs.p2);
+        }
       }
     } else if (game.state === 'replay') {
       var frames = SG.Replay.nextInputs();
@@ -971,7 +974,7 @@
   function render() {
     var ctx = game.ctx;
     ctx.clearRect(0, 0, 1280, 720);
-    if (game.state === 'battle' || game.state === 'replay') {
+    if ((game.state === 'battle' || game.state === 'replay') && game.battle) {
       game.battle.draw(ctx);
     } else if (game.state === 'showcase') {
       drawMoveShow(ctx, game.moveShow);
@@ -1282,6 +1285,15 @@
       }
       if (e.code === 'KeyG') {
         if (game.state === 'battle' || game.state === 'casual') game.toggleAutoPilot();
+      }
+      // 回车/空格：点击当前界面的默认（高亮）按钮——懒人友好
+      if (e.key === 'Enter' || e.key === ' ') {
+        var tag = e.target && e.target.tagName;
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+          var active = doc.querySelector('.screen.active');
+          var defBtn = active && active.querySelector('.btn.primary');
+          if (defBtn && !defBtn.disabled) { e.preventDefault(); defBtn.click(); }
+        }
       }
     });
     doc.addEventListener('keyup', function (e) { keys[e.code] = false; });

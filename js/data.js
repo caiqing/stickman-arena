@@ -56,10 +56,12 @@
   var WEAPONS = [
     { id: 'fist',    name: '赤手拳法', dmg: 1.0,  spd: 1.15, range: 1.0,
       desc: '空手迅捷，连击流畅', ult: { name: '升龙拳', type: 'upper', dmg: 30 },
+      ult2: { name: '咏春·日字冲拳', type: 'ipman', dmg: 42 },
       moves: [
         { name: '疾风连拳', desc: '三段直拳连环出击，快得看不清影子', anim: 'punch', dur: 1.6 },
         { name: '无影腿', desc: '低身高段两连踢，破防利器', anim: 'kick', dur: 1.6 },
-        { name: '升龙拳', desc: '终极奥义：腾空螺旋上击，把对手送上天', anim: 'ult-upper', dur: 2.2 }
+        { name: '升龙拳', desc: '终极奥义：腾空螺旋上击，把对手送上天', anim: 'ult-upper', dur: 2.2 },
+        { name: '咏春·日字冲拳', desc: '叶问式连环快拳，残影重重', anim: 'ult-rush', dur: 2.0 }
       ],
       locked: 0 },
     { id: 'sword',   name: '青锋铁剑', dmg: 1.1,  spd: 1.0,  range: 1.15,
@@ -246,7 +248,10 @@
       trainLabel: '陪练出招的瞬间按 S 格挡——成功弹反 2 次' },
     { id: 'lastStand', icon: '🔥', name: '背水一战', need: 5,
       desc: '血量低于 35% 时伤害 +25%，绝境爆发',
-      trainLabel: '命中陪练 5 次，激发血性' }
+      trainLabel: '命中陪练 5 次，激发血性' },
+    { id: 'ipman', icon: '🥋', name: '咏春 · 日字冲拳', need: 1,
+      desc: '解锁拳法第二奥义：近身时按 U，自动改出叶问式连环快拳（残影连击）',
+      trainLabel: '贴近陪练按 U，用咏春快拳命中陪练' }
   ];
 
   // ---------- 修炼模式：可习得的武学（解锁后实战永久生效） ----------

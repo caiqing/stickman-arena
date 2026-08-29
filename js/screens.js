@@ -265,7 +265,9 @@
       function refreshWinfo() {
         var w = SG.DATA.weaponById(custom.weapon);
         var gr = SG.DATA.gearById(custom.gear || 'none');
-        winfo.innerHTML = '⚡ 武器技能大招：<b>「' + w.ult.name + '」</b> · ' + w.desc +
+        winfo.innerHTML = '⚡ 武器技能大招：<b>「' + w.ult.name + (w.ult2 ? ' / ' + w.ult2.name : '') + '」</b> · ' + w.desc +
+          (w.id === 'fist' ? '<br>🥋 拳法双奥义：远距「升龙拳」，近身自动改出「咏春快拳」（可修炼解锁）' : '') +
+          (w.id === 'fist' || w.ult2 ? '' : '') +
           (gr && gr.desc ? '<br>🎁 装备效果：' + gr.desc : '');
       }
       refreshWinfo();

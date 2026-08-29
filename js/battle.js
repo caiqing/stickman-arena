@@ -38,6 +38,7 @@
 
     this.floorY = FLOOR; this.minX = 40; this.maxX = W - 40;
     this.particles = []; this.dmgNums = []; this.projectiles = []; this.afterimages = [];
+    this.slashes = [];   // 剑气/刀气弧光特效
     this.shakeT = 0; this.shakeAmp = 0;
     this.hitstop = 0; this.slowmo = 0; this.flash = 0;
     this.banner_ = null;
@@ -156,6 +157,7 @@
       if (this.mode === 'training' && this.training) {
         if (this.training.skill === 'chain3') this.p1._allowChain3 = true;
         if (this.training.skill === 'kick3') this.p1._allowKick3 = true;
+        if (this.training.skill === 'ipman') this.p1._allowIpman = true;
       }
 
       if (this.shakeT > 0) this.shakeT -= dt;
@@ -290,6 +292,7 @@
         if (tr.skill === 'parry' && res === 'parried') tr.got++;
         else if ((tr.skill === 'chain3' || tr.skill === 'kick3') && res === 'hit' && stg === 3) tr.got++;
         else if (tr.skill === 'lastStand' && res === 'hit') tr.got++;
+        else if (tr.skill === 'ipman' && res === 'hit' && attacker.state === 'ult') tr.got++;
         if (!tr.done && tr.got >= tr.need) {
           tr.done = true;
           this.onEvent('trainingDone', { skill: tr.skill });
@@ -330,6 +333,28 @@
     // ---------- 特效 ----------
     fx: function (type, f) {
       switch (type) {
+        case 'weaponfx': {
+          // 武器气浪：按武器类型生成剑气/刀气/枪芒
+          var wid = f.custom.weapon, stg = (f.atk && f.atk.stage) || 1;
+          var hx = f.x + f.facing * 42, hy = f.y - 92;
+          var col = { sword: '#bfe3ff', hammer: '#ffd34d', spear: '#ffb3c8',
+                      staff: '#ffb347', nunchaku: '#e6e6ff', fist: '#ffffff' }[wid] || '#ffffff';
+          var mul = stg >= 3 ? 1.45 : stg === 2 ? 1.15 : 0.9;
+          var ang = f.facing > 0 ? -0.4 : Math.PI + 0.4;
+          if (wid === 'spear') {
+            this.slashes.push({ type: 'streak', x: hx, y: hy, ang: f.facing > 0 ? 0 : Math.PI,
+              len: 130 * mul, life: 0.2, max: 0.2, color: col });
+          } else if (wid === 'sword' || wid === 'hammer' || wid === 'staff') {
+            this.slashes.push({ type: 'arc', x: hx, y: hy - 4, ang: ang,
+              r: 46 * mul, life: 0.22, max: 0.22, color: col });
+          } else if (wid === 'nunchaku') {
+            this.slashes.push({ type: 'arc', x: hx, y: hy + 6, ang: f.facing > 0 ? -0.9 : Math.PI + 0.9,
+              r: 34 * mul, life: 0.18, max: 0.18, color: col });
+          } else if (stg >= 2) {
+            this.spawnHitSparks(hx, hy, stg >= 3 ? 9 : 5, stg >= 3, '#ffffff');
+          }
+          break;
+        }
         case 'afterimage':
           this.afterimages.push({ x: f.x, y: f.y, facing: f.facing, custom: f.custom, life: 0.3, params: f.poseInfo() });
           break;
@@ -389,6 +414,13 @@
         p.life -= dt;
         if (p.life <= 0) this.particles.splice(i, 1);
       }
+      // 剑气/刀气弧光衰减
+      for (var s2 = this.slashes.length - 1; s2 >= 0; s2--) {
+        var sl = this.slashes[s2];
+        sl.life -= dt;
+        sl.r += 170 * dt;
+        if (sl.life <= 0) this.slashes.splice(s2, 1);
+      }
       for (var j = this.dmgNums.length - 1; j >= 0; j--) {
         var d = this.dmgNums[j];
         d.y -= 60 * dt; d.life -= dt;
@@ -442,6 +474,7 @@
       var order = this.p1.y <= this.p2.y ? [this.p1, this.p2] : [this.p2, this.p1];
       order.forEach(function (f) { f.draw(ctx, this); }, this);
       this.drawProjectiles(ctx);
+      this.drawSlashes(ctx);
       this.drawParticles(ctx);
       this.drawDamageNums(ctx);
       ctx.restore();
@@ -567,6 +600,34 @@
         ctx.globalAlpha = Math.min(1, p.life * 3);
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        ctx.globalAlpha = 1;
+      });
+    },
+
+    drawSlashes: function (ctx) {
+      this.slashes.forEach(function (sl) {
+        var t2 = Math.max(0, sl.life / sl.max);
+        ctx.save();
+        ctx.translate(sl.x, sl.y);
+        ctx.rotate(sl.ang);
+        ctx.globalAlpha = Math.max(0, t2);
+        if (sl.type === 'streak') {
+          var g2 = ctx.createLinearGradient(0, 0, sl.len, 0);
+          g2.addColorStop(0, 'rgba(255,255,255,0)');
+          g2.addColorStop(0.55, sl.color);
+          g2.addColorStop(1, 'rgba(255,255,255,0.95)');
+          ctx.strokeStyle = g2;
+          ctx.lineWidth = 6 * t2 + 1; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(sl.len * 0.12, 0); ctx.lineTo(sl.len, 0); ctx.stroke();
+        } else {
+          ctx.strokeStyle = sl.color;
+          ctx.lineWidth = 7 * t2 + 1; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.arc(0, 0, sl.r, -1.15, 1.15); ctx.stroke();
+          ctx.globalAlpha = Math.max(0, t2 * 0.45);
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(0, 0, sl.r + 11, -0.85, 0.85); ctx.stroke();
+        }
+        ctx.restore();
         ctx.globalAlpha = 1;
       });
     },

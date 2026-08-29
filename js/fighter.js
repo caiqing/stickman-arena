@@ -263,7 +263,7 @@
       var total = tm.startup + tm.active + tm.recover;
 
       if (this.atkT >= tm.startup && this.atkT < tm.startup + tm.active) {
-        if (!this.sfxPlayed) { battle.sfx(a.def.sfx); this.sfxPlayed = true; }
+        if (!this.sfxPlayed) { battle.sfx(a.def.sfx); battle.fx('weaponfx', this); this.sfxPlayed = true; }
         // 连招段2/3 主动前冲追击（锁定连击距离）
         if (a.lunge) this.x += this.facing * 900 * dt;
         // 命中判定
@@ -361,10 +361,19 @@
       this.ultReadyNotified = false;
       this.state = 'ult'; this.stateT = 0;
       this.invincible = true;
-      this.ult = { type: this.weapon.ult.type, t: 0, hits: 0, done: false, opp: opp };
+      // 拳法双奥义：近身自动改用「咏春·日字冲拳」（需修炼解锁；道场中可试用）
+      var ut = this.weapon.ult.type, uname = this.weapon.ult.name;
+      var g = SG.game;
+      var canIpman = this.weapon.id === 'fist' &&
+        (!g || !g.hasSkill || g.hasSkill('ipman') || this._allowIpman);
+      if (ut === 'upper' && opp && canIpman && Math.abs(opp.x - this.x) < 165) {
+        ut = 'ipman';
+        uname = '咏春·日字冲拳';
+      }
+      this.ult = { type: ut, t: 0, hits: 0, done: false, opp: opp, name: uname };
       battle.sfx('ult');
       battle.fx('ultstart', this);   // 白屏闪烁 + 定身
-      battle.banner(this.weapon.ult.name + '！');
+      battle.banner(uname + '！');
       if (this.isBoss) battle.shake(14, 0.5); else battle.shake(10, 0.4);
     },
 
@@ -372,11 +381,42 @@
       var u = this.ult;
       u.t += dt;
       var t = u.t;
+      // 咏春·日字冲拳：叶问式残影连环快拳
+      if (u.type === 'ipman') {
+        if (!u.done) {
+          u.done = true;
+          u.hits = 0;
+          this.facing = opp.x >= this.x ? 1 : -1;
+          this.x = opp.x - this.facing * 78;
+        }
+        this._ipT = (this._ipT || 0) + dt;
+        if (this._ipT >= 0.14 && u.hits < 8) {
+          this._ipT = 0;
+          u.hits++;
+          this.facing = opp.x >= this.x ? 1 : -1;
+          battle.fx('afterimage', this);
+          this.tryUltHit(opp, battle, { w: 130, h: 150, dmg: 4.5 * this.dmgMult, once: false, kb: 26, hitSfx: 'punch' });
+          battle.sfx('punch');
+        }
+        if (u.hits >= 8 && this._ipT > 0.2 && !u.knock) {
+          u.knock = true;
+          this.tryUltHit(opp, battle, { w: 140, h: 160, dmg: 6 * this.dmgMult, once: false, kb: 560, launch: -260, hitSfx: 'hitHeavy' });
+          battle.sfx('hitHeavy');
+          battle.shake(9, 0.3);
+        }
+        if (t > 1.75) this.endUlt(battle);
+        this.physics(dt, battle);
+        return;
+      }
       switch (u.type) {
         case 'upper':
           if (t < 0.15) { this.vx = 0; }
           else if (t < 0.55) {
-            if (t - dt <= 0.15) { this.vy = -760; this.vx = 240 * this.facing; this.onGround = false; }
+            if (t - dt <= 0.15) {
+              this.vy = -760; this.vx = 240 * this.facing; this.onGround = false;
+              battle.slashes.push({ type: 'arc', x: this.x, y: this.y - 70, ang: -Math.PI / 2,
+                r: 64, life: 0.3, max: 0.3, color: '#bfe3ff' });
+            }
             this.tryUltHit(opp, battle, { w: 100, h: 170, dmg: 30 * this.dmgMult, once: true, launch: -520 });
           } else if (t > 1.0) { this.endUlt(battle); }
           break;
@@ -386,6 +426,9 @@
               u.hits++;
               this.tryUltHit(opp, battle, { circle: 135, dmg: 12 * this.dmgMult, once: false, kb: 180 });
               battle.sfx('punch');
+              battle.slashes.push({ type: 'arc', x: this.x, y: this.y - 80,
+                ang: (u.hits * 1.05 + 0.3) * (this.facing > 0 ? 1 : -1) + (this.facing > 0 ? 0 : Math.PI),
+                r: 56, life: 0.24, max: 0.24, color: '#bfe3ff' });
             }
             if (t > 0.2 && t - dt <= 0.2) battle.shake(5, 0.15);
           }
@@ -504,6 +547,10 @@
       if (this.state === 'charge') return { pose: 'charge', t: t };
       if (this.state === 'ult') {
         var u = this.ult;
+        if (u && u.type === 'ipman') {
+          // 咏春快拳：左右拳交替 + 残影已由特效层生成
+          return { pose: (u.hits % 2 ? 'punchB' : 'punchX'), t: 0 };
+        }
         if (u && (u.type === 'spin')) return { pose: 'ult', t: t * 3 };
         if (u && u.type === 'fire') return { pose: 'charge', t: t };
         return { pose: 'ult', t: t };

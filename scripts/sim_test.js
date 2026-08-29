@@ -74,7 +74,7 @@ weapons.forEach(function (wid) {
   var dt = 1 / 60;
   for (var w = 0; w < 100; w++) b.update(dt, {});   // 等待 intro 结束进入战斗
   b.update(dt, { p1: { ult: true }, p2: {} });      // 触发大招
-  for (var k = 0; k < 120; k++) b.update(dt, { p1: {}, p2: {} });
+  for (var k = 0; k < 300; k++) b.update(dt, { p1: {}, p2: {} });
   var used = b.p1.ult === null && b.p1.state !== 'ult';
   var dealt = b.p2.hp < b.p2.maxHp;
   console.log('  ' + wid + ': 释放' + (used ? '正常' : '异常!') + ' 命中=' + (dealt ? '是' : '否!') +

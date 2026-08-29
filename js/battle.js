@@ -312,7 +312,14 @@
     updateProjectiles: function (dt) {
       for (var i = this.projectiles.length - 1; i >= 0; i--) {
         var p = this.projectiles[i];
-        p.x += p.vx * dt; p.life -= dt;
+        p.x += p.vx * dt;
+        p.y += (p.vy || 0) * dt;
+        p.life -= dt;
+        // 纯视觉弹（弹雨风暴）：不参与判定
+        if (p.noHit) {
+          if (p.life <= 0 || p.y > 760) this.projectiles.splice(i, 1);
+          continue;
+        }
         var target = p.owner === this.p1 ? this.p2 : this.p1;
         var hurt = target.hurtbox();
         var px = Math.max(hurt.x, Math.min(p.x, hurt.x + hurt.w));
@@ -326,7 +333,7 @@
           this.projectiles.splice(i, 1);
           continue;
         }
-        if (p.life <= 0 || p.x < 0 || p.x > W) this.projectiles.splice(i, 1);
+        if (p.life <= 0 || p.x < 0 || p.x > W || p.y > H + 30) this.projectiles.splice(i, 1);
       }
     },
 
@@ -583,6 +590,29 @@
 
     drawProjectiles: function (ctx) {
       this.projectiles.forEach(function (p) {
+        // 弹道类：箭矢 / 子弹 / 狙击弹（按速度方向绘制）
+        if (p.type === 'arrow' || p.type === 'bullet' || p.type === 'sniper') {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(Math.atan2(p.vy || 0, p.vx));
+          if (p.type === 'arrow') {
+            ctx.strokeStyle = '#d8c49a'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(8, 0); ctx.stroke();
+            ctx.fillStyle = '#e8e8e8';
+            ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(7, -4); ctx.lineTo(7, 4); ctx.closePath(); ctx.fill();
+          } else if (p.type === 'sniper') {
+            var sg3 = ctx.createLinearGradient(-110, 0, 30, 0);
+            sg3.addColorStop(0, 'rgba(255,120,80,0)');
+            sg3.addColorStop(1, 'rgba(255,120,80,.95)');
+            ctx.strokeStyle = sg3; ctx.lineWidth = 5; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(-110, 0); ctx.lineTo(30, 0); ctx.stroke();
+          } else {
+            ctx.fillStyle = '#ffd34d';
+            ctx.beginPath(); ctx.ellipse(-7, 0, 13, 2.6, 0, 0, 7); ctx.fill();
+          }
+          ctx.restore();
+          return;
+        }
         var r = p.r + Math.sin(this.time * 20) * 2;
         var g = ctx.createRadialGradient(p.x, p.y, 2, p.x, p.y, r * 2);
         g.addColorStop(0, 'rgba(255,220,120,0.95)');

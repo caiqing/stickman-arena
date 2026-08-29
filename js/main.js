@@ -363,10 +363,11 @@
   game.startUltDemo = function (custom) { game.startMoveShow(custom); };
   game.stopUltDemo = game.stopMoveShow;
   if (!game.settings) {
-    game.settings = { master: 0.8, music: 0.55, sfx: 0.9, touch: 'auto', bgm: 'auto' };
+    game.settings = { master: 0.8, music: 0.55, sfx: 0.9, touch: 'auto', bgm: 'auto', autoContinue: 0 };
   }
   if (game.settings.touch === undefined) game.settings.touch = 'auto';
   if (game.settings.bgm === undefined) game.settings.bgm = 'auto';
+  if (game.settings.autoContinue === undefined) game.settings.autoContinue = 0;
   SG.Audio.setVolumes(game.settings);
 
   // 背景音乐偏好路由：auto=按场景自动配乐；指定曲目=全局覆盖；off=关闭
@@ -910,6 +911,20 @@
         }
       }
     } catch (e) { showErr('sysbar: ' + e.message); }
+
+    // 自动继续：剧情对话/结算面板超时自动点击默认按钮（懒人观赏模式）
+    try {
+      var acSec = game.settings.autoContinue || 0;
+      if (acSec > 0 && !game.paused && SG.UI._shownAt && performance.now() - SG.UI._shownAt > acSec * 1000) {
+        var act = doc.querySelector('.screen.active');
+        if (act && (act.id === 'screen-dialogue' || act.id === 'screen-result')) {
+          SG.UI._shownAt = performance.now();
+          var tgt = act.id === 'screen-dialogue' ? act.querySelector('.dialogue-box')
+            : (act.querySelector('.btn.primary') || act.querySelector('.btn'));
+          if (tgt) tgt.click();
+        }
+      }
+    } catch (e) {}
 
     if (!game.paused) {
       acc += el;

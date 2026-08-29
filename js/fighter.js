@@ -7,6 +7,10 @@
   var HURT_W = 48, HURT_H = 152;
 
   // 攻击定义（时间会被武器速度缩放）
+  // 背水一战伤害倍率（提取为公共函数）
+  function lsMul(f) {
+    return (SG.game && SG.game.hasSkill && SG.game.hasSkill("lastStand") && f.hp < f.maxHp * 0.35) ? 1.25 : 1;
+  }
   var ATK = {
     light: { startup: 0.13, active: 0.10, recover: 0.17, dmg: 6, range: 74, kb: 150, hitstun: 0.28, sfx: 'punch', hitSfx: 'hit' },
     heavy: { startup: 0.24, active: 0.12, recover: 0.30, dmg: 11, range: 90, kb: 360, hitstun: 0.4, launch: -300, sfx: 'punch', hitSfx: 'hitHeavy' }
@@ -51,6 +55,7 @@
     this.invincible = false;
     this.dead = false;
     this.roundsWon = 0;
+    this._autoCd = 0;              // 全自动武器开火冷却
   }
 
   Fighter.prototype = {
@@ -63,6 +68,12 @@
       var p = this.prev || {};
       var pressed = function (k) { return input[k] && !p[k]; };
       if (input.down && !p.down) this.blockPressedAt = this.animT;   // 弹反计时
+      // 全自动武器：按住攻击键持续开火
+      if (this.weapon.ranged && this.weapon.ranged.auto &&
+          (input.punch || input.kick) && this.canAct() && this._autoCd <= 0) {
+        this.startAttack(input.kick ? 'heavy' : 'light');
+        this._autoCd = 0.03;
+      }
       var grounded = this.onGround;
 
       // ---- 终局状态 ----
@@ -249,6 +260,10 @@
       this.atkT = 0; this.hitDone = false;
       var s = this.spdMult;
       this.atk.timing = { startup: def.startup / s, active: def.active / s, recover: def.recover / s };
+      // 全自动武器（加特林/冲锋枪）：按住持续速射
+      if (this.weapon.ranged && this.weapon.ranged.auto) {
+        this.atk.timing = { startup: 0.06, active: 0.05, recover: 0.05 };
+      }
       // 段位加成：段2 伤害×1.15；段3 伤害×1.45、击退×2.2、主动前冲追击
       // 连招段1/2 击退减小（锁住对手保持连击距离），终结段大击退打飞
       this.atk.dmgMul = stage >= 3 ? 1.45 : stage === 2 ? 1.15 : 1;
@@ -263,23 +278,40 @@
       var total = tm.startup + tm.active + tm.recover;
 
       if (this.atkT >= tm.startup && this.atkT < tm.startup + tm.active) {
-        if (!this.sfxPlayed) { battle.sfx(a.def.sfx); battle.fx('weaponfx', this); this.sfxPlayed = true; }
-        // 连招段2/3 主动前冲追击（锁定连击距离）
-        if (a.lunge) this.x += this.facing * 900 * dt;
-        // 命中判定
-        if (!this.hitDone) {
-          var hb = this.attackHitbox();
-          var hurt = opp.hurtbox();
-          if (hb.x < hurt.x + hurt.w && hb.x + hb.w > hurt.x &&
-              hb.y < hurt.y + hurt.h && hb.y + hb.h > hurt.y) {
-            this.hitDone = true;
-            var lsMul = (SG.game && SG.game.hasSkill && SG.game.hasSkill('lastStand') && this.hp < this.maxHp * 0.35) ? 1.25 : 1;
-            battle.onHit(this, opp, {
-              dmg: a.def.dmg * this.dmgMult * (a.dmgMul || 1) * lsMul,
-              kb: a.def.kb * (a.kbMul || 1), hitstun: a.def.hitstun,
-              launch: a.def.launch || 0,
-              heavy: a.kind === 'heavy', hitSfx: a.def.hitSfx
+        if (!this.sfxPlayed) {
+          // 远程武器：发射子弹/箭矢（重击 = 强化弹）
+          if (this.weapon.ranged) {
+            var rd = this.weapon.ranged, hv = a.kind === 'heavy';
+            battle.sfx(hv ? 'shotBig' : 'shot');
+            battle.spawnProjectile(this, {
+              x: this.x + this.facing * 46, y: this.y - 95,
+              vx: this.facing * rd.projSpd,
+              dmg: rd.dmg * (hv ? 1.7 : 1) * this.dmgMult * lsMul(this),
+              r: rd.kind === 'sniper' ? 9 : 5, type: rd.kind
             });
+          } else {
+            battle.sfx(a.def.sfx);
+            battle.fx('weaponfx', this);
+          }
+          this.sfxPlayed = true;
+        }
+        // 近战武器：连招段2/3 前冲 + 命中判定
+        if (!this.weapon.ranged) {
+          if (a.lunge) this.x += this.facing * 900 * dt;
+          if (!this.hitDone) {
+            var hb = this.attackHitbox();
+            var hurt = opp.hurtbox();
+            if (hb.x < hurt.x + hurt.w && hb.x + hb.w > hurt.x &&
+                hb.y < hurt.y + hurt.h && hb.y + hb.h > hurt.y) {
+              this.hitDone = true;
+              var lsM = lsMul(this);
+              battle.onHit(this, opp, {
+                dmg: a.def.dmg * this.dmgMult * (a.dmgMul || 1) * lsM,
+                kb: a.def.kb * (a.kbMul || 1), hitstun: a.def.hitstun,
+                launch: a.def.launch || 0,
+                heavy: a.kind === 'heavy', hitSfx: a.def.hitSfx
+              });
+            }
           }
         }
       }
@@ -381,6 +413,8 @@
       var u = this.ult;
       u.t += dt;
       var t = u.t;
+      // 安全上限：任何大招不超过 3.5 秒（防止无限无敌）
+      if (t > 3.5) { this.endUlt(battle); return; }
       // 咏春·日字冲拳：叶问式残影连环快拳
       if (u.type === 'ipman') {
         if (!u.done) {
@@ -492,6 +526,74 @@
             this.tryUltHit(opp, battle, { w: 160, h: 170, dmg: 0, once: false, kb: 520, launch: -420, noDmg: true });
           }
           if (t > 1.0) this.endUlt(battle);
+          break;
+        case 'lightning':   // 雷神之锤：引九天之雷轰击对手
+          if (t > 0.4 && !u.done) {
+            u.done = true;
+            var bx = opp.x;
+            battle.slashes.push({ type: 'bolt', x: bx, y: 0, life: 0.4, max: 0.4, color: '#9ad6ff' });
+            battle.flash = 0.6; battle.shake(14, 0.5);
+            battle.sfx('ult');
+            if (opp.onGround && Math.abs(opp.x - bx) < 95) {
+              this.tryUltHit(opp, battle, { w: 180, h: 260, dmg: 40 * this.dmgMult, once: true, kb: 260, launch: -300 });
+            }
+          }
+          if (t > 1.2) this.endUlt(battle);
+          break;
+        case 'gunburst':   // 手枪：三连速射
+          if (t > 0.25 + u.hits * 0.28 && u.hits < 3) {
+            u.hits++;
+            battle.sfx('shotBig');
+            battle.spawnProjectile(this, { x: this.x + this.facing * 50, y: this.y - 95,
+              vx: this.facing * 1350, dmg: 12 * this.dmgMult, r: 6, type: 'bullet' });
+          }
+          if (t > 1.3) this.endUlt(battle);
+          break;
+        case 'spray':   // 冲锋枪：倾泻弹雨
+          this._spT = (this._spT || 0) - dt;
+          if (t > 0.15 && t < 1.15 && this._spT <= 0) {
+            this._spT = 0.1;
+            battle.sfx('shot');
+            battle.spawnProjectile(this, { x: this.x + this.facing * 50, y: this.y - 95 + (Math.random() - 0.5) * 26,
+              vx: this.facing * 1250, dmg: 3.2 * this.dmgMult, r: 4, type: 'bullet' });
+          }
+          if (t > 1.6) this.endUlt(battle);
+          break;
+        case 'sniper':   // 狙击枪：瞄准 + 穿透一击
+          if (t > 0.6 && !u.done) {
+            u.done = true;
+            battle.slashes.push({ type: 'streak', x: this.x + this.facing * 46, y: this.y - 95,
+              ang: this.facing > 0 ? 0 : Math.PI, len: 1200, life: 0.25, max: 0.25, color: '#ff8a6a' });
+            battle.sfx('shotBig'); battle.shake(10, 0.3);
+            battle.spawnProjectile(this, { x: this.x + this.facing * 50, y: this.y - 95,
+              vx: this.facing * 2200, dmg: 45 * this.dmgMult, r: 9, type: 'sniper' });
+          }
+          if (t > 1.3) this.endUlt(battle);
+          break;
+        case 'rain':   // 加特林·弹雨风暴：天降弹雨 3 秒，我方无敌
+          if (!u.done) {
+            u.done = true;
+            u.rainX = opp.x;
+            this.invincible = true;
+            battle.banner('弹雨风暴！');
+          }
+          u._vis = (u._vis || 0) - dt;
+          if (u._vis <= 0) {
+            u._vis = 0.09;
+            for (var ri = 0; ri < 2; ri++) {
+              battle.projectiles.push({ x: u.rainX + (Math.random() - 0.5) * 520, y: -20,
+                vx: 0, vy: 820, dmg: 0, r: 4, type: 'bullet', noHit: true, life: 1.15 });
+            }
+            battle.sfx('shot');
+          }
+          u._dmgT = (u._dmgT || 0) - dt;
+          if (u._dmgT <= 0) {
+            u._dmgT = 0.3;
+            if (Math.abs(opp.x - u.rainX) < 260) {
+              battle.onHit(this, opp, { dmg: 7 * this.dmgMult, kb: 26, hitstun: 0.1, hitSfx: 'shot', isUlt: true });
+            }
+          }
+          if (t > 3) this.endUlt(battle);
           break;
       }
       this.physics(dt, battle);

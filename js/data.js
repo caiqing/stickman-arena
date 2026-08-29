@@ -194,7 +194,7 @@
       ],
       locked: 0 },
     // ===== 现代武器（乱入武林，趣味十足） =====
-    { id: 'pistol', name: '配枪·掌心雷', dmg: 0.95, spd: 0.95, range: 1.7, ranged: { dmg: 7, projSpd: 1000, kind: 'bullet' },
+    { id: 'pistol', name: '配枪·掌心雷', dmg: 0.95, spd: 0.95, range: 1.7, ranged: { dmg: 7, projSpd: 1000, kind: 'bullet', cd: 0.35, sfx: 'shot' },
       desc: '现代乱入武林，一枪一个脆皮',
       ult: { name: '致命一击', type: 'gunburst', dmg: 30 },
       moves: [
@@ -203,7 +203,7 @@
         { name: '致命一击', desc: '终极奥义：三连速射，专打面门', anim: 'gunburst', dur: 1.8 }
       ],
       locked: 0 },
-    { id: 'smg', name: '冲锋枪·狂风', dmg: 0.55, spd: 1.5, range: 1.6, ranged: { dmg: 3.5, projSpd: 1100, kind: 'bullet' },
+    { id: 'smg', name: '冲锋枪·狂风', dmg: 0.55, spd: 1.5, range: 1.6, ranged: { dmg: 3.5, projSpd: 1100, kind: 'bullet', cd: 0.16, auto: true, sfx: 'shot' },
       desc: '弹雨如风，近战扫射',
       ult: { name: '扫射狂潮', type: 'spray', dmg: 36 },
       moves: [
@@ -212,7 +212,7 @@
         { name: '扫射狂潮', desc: '终极奥义：倾泻弹雨，寸草不生', anim: 'spray', dur: 2.2 }
       ],
       locked: 0 },
-    { id: 'sniper', name: '狙击枪·鹰眼', dmg: 2.1, spd: 0.38, range: 2.3, ranged: { dmg: 26, projSpd: 1600, kind: 'sniper' },
+    { id: 'sniper', name: '狙击枪·鹰眼', dmg: 2.1, spd: 0.38, range: 2.3, ranged: { dmg: 26, projSpd: 1600, kind: 'sniper', cd: 1.4, sfx: 'shotBig' },
       desc: '一击必杀，千里之外',
       ult: { name: '致命瞄准', type: 'sniper', dmg: 45 },
       moves: [
@@ -221,13 +221,23 @@
         { name: '致命瞄准', desc: '终极奥义：锁定要害，一击必杀', anim: 'sniper', dur: 2.6 }
       ],
       locked: 0 },
-    { id: 'gatling', name: '加特林·弹雨', dmg: 0.4, spd: 2.0, range: 1.7, ranged: { dmg: 2.4, projSpd: 1150, kind: 'bullet' },
+    { id: 'gatling', name: '加特林·弹雨', dmg: 0.4, spd: 2.0, range: 1.7, ranged: { dmg: 2.4, projSpd: 1150, kind: 'bullet', cd: 0.09, auto: true, sfx: 'shot' },
       desc: '倾泻钢铁弹雨，火力即是正义',
-      ult: { name: '弹雨风暴', type: 'spray', dmg: 40 },
+      ult: { name: '弹雨风暴', type: 'rain', dmg: 70 },
       moves: [
         { name: '旋转启动', desc: '枪管旋转，弹雨将至', anim: 'gun', dur: 1.2 },
         { name: '持续压制', desc: '持续火力压制，对手抬不起头', anim: 'spray', dur: 2.0 },
         { name: '弹雨风暴', desc: '终极奥义：倾泻全部弹药', anim: 'spray', dur: 2.4 }
+      ],
+      locked: 0 },
+    { id: 'longbow', name: '穿云长弓', dmg: 0.75, spd: 0.62, range: 2.0,
+      ranged: { dmg: 8, projSpd: 950, kind: 'arrow', cd: 0.5, sfx: 'arrow' },
+      desc: '箭出穿云，百里取物',
+      ult: { name: '穿云箭雨', type: 'volley', dmg: 50 },
+      moves: [
+        { name: '拉弓射日', desc: '屏息拉弓，一箭穿云', anim: 'bow', dur: 1.6 },
+        { name: '连珠箭', desc: '快速连珠三箭', anim: 'gun', dur: 1.5 },
+        { name: '穿云箭雨', desc: '终极奥义：五箭齐发，遮天蔽日', anim: 'volley', dur: 2.4 }
       ],
       locked: 0 }
   ];

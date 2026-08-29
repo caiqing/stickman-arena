@@ -134,6 +134,7 @@
 
     show: function (name) {
       this.activeName = name;
+      this._shownAt = performance.now();
       this.previews = [];
       for (var k in this.screens) this.screens[k].classList.remove('active');
       if (name && this.screens[name]) {
@@ -284,7 +285,7 @@
         refreshDots(); refreshWinfo(); tickPreview();
         SG.Audio.sfx('unlock');
       }));
-      brow.appendChild(btn('🎬 演示大招', function () {
+      brow.appendChild(btn('🎬 招式演练', function () {
         if (cfg.name !== undefined) custom.name = (custom.name || '').trim() || cfg.name;
         UI._lastCustomCfg = cfg;           // 演示结束回到编辑器，保留编辑内容
         SG.game.startUltDemo(custom);
@@ -1007,7 +1008,7 @@
             }
           });
         }, 'vs'));
-        ops.appendChild(btn('🎬 演示', function () {
+        ops.appendChild(btn('🎬 演练', function () {
           UI._lastCustomCfg = null;
           SG.game.startUltDemo(item.custom);
         }, 'vs'));
@@ -1287,6 +1288,25 @@
       });
       panel.appendChild(trow);
       panel.appendChild(el('div', 'tiny', '虚拟按键：触屏设备上的屏幕按钮（战斗/休闲通用）。「自动」为检测到触屏时显示。'));
+
+      // 自动继续：对话/结算超时自动点击（配合托管挂机观赏）
+      var acRow = el('div', 'opt-row');
+      acRow.appendChild(el('div', 'opt-label', '自动继续'));
+      var acBtns = [];
+      [[0, '关'], [3, '3 秒'], [5, '5 秒'], [8, '8 秒']].forEach(function (p3) {
+        var b = btn(p3[1], function () {
+          g.settings.autoContinue = p3[0];
+          g.saveSettings();
+          acBtns.forEach(function (x) { x.classList.remove('primary'); });
+          b.classList.add('primary');
+          SG.Audio.sfx('click');
+        }, 'small');
+        if ((g.settings.autoContinue || 0) === p3[0]) b.classList.add('primary');
+        acBtns.push(b);
+        acRow.appendChild(b);
+      });
+      panel.appendChild(acRow);
+      panel.appendChild(el('div', 'tiny', '自动继续：剧情对话与结算面板超时后自动点击继续——配合托管模式挂机观赏 AI 大战更佳。'));
 
       var br = el('div', 'btn-row');
       br.appendChild(btn('返回', function () { UI.show('title'); }));

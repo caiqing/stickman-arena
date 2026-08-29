@@ -1005,7 +1005,8 @@
   // 菜单背景：两个火柴人在两侧随机演武（组合拳/大招/对拳/跳跃/挑衅），带音效特效
   function drawMenuBg(ctx) {
     var t = game.menuT;
-    var d = game.demo || (game.demo = { scene: 'idle', st: 0, dur: 1.2, actor: 0, last: t, fx: [], banner: null, shake: 0, flash: 0, flags: {} });
+    var d = game.demo || (game.demo = { scene: 'idle', st: 0, dur: 1.2, actor: 0, last: t, fx: [], slashes: [], banner: null, shake: 0, flash: 0, flags: {} });
+    if (!d.slashes) d.slashes = [];
     var dt = Math.max(0, Math.min(0.05, t - (d.last || t)));
     d.last = t;
     d.st += dt;
@@ -1039,11 +1040,20 @@
     if (d.scene === 'combo') {
       var ap, dp = p < 0.92 ? 'block' : (p < 1.55 ? 'hurt' : 'idle');
       if (p < 0.3) ap = 'punchW';
-      else if (p < 0.45) { ap = 'punchX'; if (!d.flags.s1) { d.flags.s1 = 1; sfx('punch'); } }
+      else if (p < 0.45) { ap = 'punchX'; if (!d.flags.s1) { d.flags.s1 = 1; sfx('punch');
+        var ax1 = who === 0 ? 250 : 1030;
+        d.slashes.push({ x: ax1, y: 500, ang: who === 0 ? -0.4 : Math.PI + 0.4, r: 42, life: 0.2, max: 0.2, color: '#bfe3ff' });
+      } }
       else if (p < 0.62) ap = 'punchW';
-      else if (p < 0.78) { ap = 'punchX'; if (!d.flags.s2) { d.flags.s2 = 1; sfx('hit'); } }
+      else if (p < 0.78) { ap = 'punchX'; if (!d.flags.s2) { d.flags.s2 = 1; sfx('hit');
+        var ax2 = who === 0 ? 260 : 1020;
+        d.slashes.push({ x: ax2, y: 510, ang: who === 0 ? -0.2 : Math.PI + 0.2, r: 46, life: 0.18, max: 0.18, color: '#d8c49a' });
+      } }
       else if (p < 0.95) ap = 'kickW';
-      else if (p < 1.12) { ap = 'kickX'; if (!d.flags.s3) { d.flags.s3 = 1; sfx('hitHeavy'); d.shake = 0.22; } }
+      else if (p < 1.12) { ap = 'kickX'; if (!d.flags.s3) { d.flags.s3 = 1; sfx('hitHeavy'); d.shake = 0.22;
+        var ax3 = who === 0 ? 280 : 1000;
+        d.slashes.push({ x: ax3, y: 520, ang: who === 0 ? 0.1 : Math.PI + 0.1, r: 52, life: 0.22, max: 0.22, color: '#ffd34d' });
+      } }
       else ap = 'idle';
       if (p > 0.78 && p < 1.0 && !d.flags.sp) { d.flags.sp = 1; spark(who === 0 ? 1000 : 280, 500, 10, true); }
       if (who === 0) { poseL = ap; poseR = dp; } else { poseR = ap; poseL = dp; }
@@ -1057,6 +1067,14 @@
           sfx('ult'); d.flash = 0.7; d.shake = 0.4;
           d.banner = { text: '「' + ultNames[who] + '」', t: 0, actor: who };
           spark(who === 0 ? 1000 : 280, 500, 16, true);
+          // 剑气/拳风专属弧光
+          if (who === 0) {
+            d.slashes.push({ x: 150, y: 530, ang: -0.5, r: 64, life: 0.28, max: 0.28, color: '#bfe3ff' });
+            d.slashes.push({ x: 150, y: 530, ang: 0.3, r: 76, life: 0.24, max: 0.24, color: '#e8f4ff' });
+          } else {
+            d.slashes.push({ x: 1130, y: 530, ang: Math.PI + 0.5, r: 58, life: 0.28, max: 0.28, color: '#ffffff' });
+            d.slashes.push({ x: 1130, y: 530, ang: Math.PI - 0.3, r: 70, life: 0.24, max: 0.24, color: '#ffd34d' });
+          }
         }
         dp = p > 0.55 ? 'hurt' : 'block';
       } else { up = 'idle'; dp = 'hurt'; }

@@ -814,9 +814,11 @@
 
   function frame(ts) {
     requestAnimationFrame(frame);
-    if (!lastT) lastT = ts;
-    var el = Math.min(0.25, (ts - lastT) / 1000);
-    lastT = ts;
+    // 用 performance.now() 计时：部分内核 rAF 时间戳单位异常，会导致主循环死亡
+    var now = performance.now();
+    if (!lastT) lastT = now;
+    var el = Math.min(0.25, (now - lastT) / 1000);
+    lastT = now;
 
     // 虚拟按键随游戏状态/玩法切换
     if (SG.Touch) {
@@ -826,19 +828,21 @@
       SG.Touch.sync(touchMode);
     }
     // 系统按钮条：静音常驻；暂停/托管仅游戏中显示；触屏虚拟按键可见时隐藏以免重复
-    if (game.sysbar) {
-      var inGame = game.state === 'battle' || game.state === 'casual' || game.state === 'replay';
-      game.sysPause.classList.toggle('hiddenbtn', !inGame);
-      game.sysAuto.classList.toggle('hiddenbtn', !(game.state === 'battle' || game.state === 'casual'));
-      var padVis = SG.Touch && SG.Touch.isVisible();
-      var demoOn = game.state === 'showcase';
-      game.sysbar.style.display = padVis || demoOn ? 'none' : 'flex';
-      game.demoExit.style.display = demoOn ? 'block' : 'none';
-      if (game.sysMute) {
-        game.sysMute.textContent = SG.Audio.getVolumes().master > 0 ? '🔊' : '🔇';
-        game.sysMute.title = SG.Audio.getVolumes().master > 0 ? '静音 (M)' : '取消静音 (M)';
+    try {
+      if (game.sysbar) {
+        var inGame = game.state === 'battle' || game.state === 'casual' || game.state === 'replay';
+        game.sysPause.classList.toggle('hiddenbtn', !inGame);
+        game.sysAuto.classList.toggle('hiddenbtn', !(game.state === 'battle' || game.state === 'casual'));
+        var padVis = SG.Touch && SG.Touch.isVisible();
+        var demoOn = game.state === 'showcase';
+        game.sysbar.style.display = padVis || demoOn ? 'none' : 'flex';
+        if (game.demoExit) game.demoExit.style.display = demoOn ? 'block' : 'none';
+        if (game.sysMute) {
+          game.sysMute.textContent = SG.Audio.getVolumes().master > 0 ? '🔊' : '🔇';
+          game.sysMute.title = SG.Audio.getVolumes().master > 0 ? '静音 (M)' : '取消静音 (M)';
+        }
       }
-    }
+    } catch (e) { showErr('sysbar: ' + e.message); }
 
     if (!game.paused) {
       acc += el;
@@ -1125,6 +1129,15 @@
   }
 
   function boot() {
+    try {
+      bootInner();
+    } catch (e) {
+      if (typeof showErr === 'function') showErr('启动失败: ' + e.message + '\n' + (e.stack || '').slice(0, 400));
+      throw e;
+    }
+  }
+
+  function bootInner() {
     game.canvas = doc.getElementById('game');
     game.ctx = game.canvas.getContext('2d');
     SG.UI.init(doc.getElementById('ui-root'));
@@ -1155,7 +1168,7 @@
     demoExit.textContent = '✕ 退出演示';
     demoExit.className = 'sysbtn';
     demoExit.style.cssText = 'position:fixed;top:12px;right:12px;width:auto;height:38px;border-radius:20px;font-size:14px;z-index:30;display:none;';
-    game.demoExit.addEventListener('click', function () { game.stopMoveShow(); });
+    demoExit.addEventListener('click', function () { game.stopMoveShow(); });
     doc.getElementById('stage-wrap').appendChild(demoExit);
     game.demoExit = demoExit;
 

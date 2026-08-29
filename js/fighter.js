@@ -540,6 +540,16 @@
           }
           if (t > 1.2) this.endUlt(battle);
           break;
+        case 'volley':   // 长弓：穿云箭雨（五连矢）
+          u._vT = (u._vT === undefined ? 0.4 : u._vT) - dt;
+          if (u._vT <= 0) {
+            u._vT = 0.28;
+            battle.sfx('arrow');
+            battle.spawnProjectile(this, { x: this.x + this.facing * 50, y: this.y - 100,
+              vx: this.facing * 1000, dmg: 10 * this.dmgMult, r: 6, type: 'arrow' });
+          }
+          if (t > 1.6) this.endUlt(battle);
+          break;
         case 'gunburst':   // 手枪：三连速射
           if (t > 0.25 + u.hits * 0.28 && u.hits < 3) {
             u.hits++;

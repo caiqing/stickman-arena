@@ -229,6 +229,16 @@
         case 'fire':
           noise(t, 0.3, 0.32, 'bandpass', 600, 1.5, bus);
           blip(t, 200, 700, 0.2, 'sawtooth', 0.1, bus); break;
+        case 'shot':
+          noise(t, 0.08, 0.4, 'highpass', 1500, 0.8, bus);
+          blip(t, 380, 90, 0.07, 'square', 0.28, bus); break;
+        case 'shotBig':
+          noise(t, 0.3, 0.55, 'lowpass', 2000, 0.7, bus);
+          blip(t, 160, 40, 0.25, 'sawtooth', 0.4, bus);
+          noise(t + 0.05, 0.2, 0.25, 'highpass', 3000, 0.5, bus); break;
+        case 'arrow':
+          blip(t, 900, 350, 0.09, 'square', 0.18, bus);
+          noise(t, 0.12, 0.15, 'highpass', 2500, 0.8, bus); break;
         case 'ko':
           blip(t, 220, 218, 1.4, 'sine', 0.5, bus);
           blip(t, 227, 224, 1.4, 'sine', 0.4, bus);

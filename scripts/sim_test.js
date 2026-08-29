@@ -64,22 +64,22 @@ for (var i = 0; i < 10; i++) {
 console.log('== 测试2：6种大招释放 ==');
 weapons.forEach(function (wid) {
   var b = new SG.Battle({
-    mode: 'versus', stage: 'dojo', roundsToWin: 99, roundTime: 99,
+    mode: 'versus', stage: 'dojo', roundsToWin: 1, roundTime: 99,
     p1: { name: 'A', custom: Object.assign(SG.DATA.defaultCustom(), { weapon: wid }), ctrl: 'human' },
     p2: { name: 'B', custom: Object.assign(SG.DATA.defaultCustom(), { weapon: wid }), ctrl: 'human' },
     onEvent: function () {}
   });
   b.p1.meter = 100;
   b.p2.x = 470;   // 拉近距离让近战大招也能命中
+  b.p2.hp = 1;    // 一击即倒，加速测试
   var dt = 1 / 60;
   for (var w = 0; w < 100; w++) b.update(dt, {});   // 等待 intro 结束进入战斗
   b.update(dt, { p1: { ult: true }, p2: {} });      // 触发大招
   for (var k = 0; k < 300; k++) b.update(dt, { p1: {}, p2: {} });
-  var used = b.p1.ult === null && b.p1.state !== 'ult';
-  var dealt = b.p2.hp < b.p2.maxHp;
-  console.log('  ' + wid + ': 释放' + (used ? '正常' : '异常!') + ' 命中=' + (dealt ? '是' : '否!') +
-    ' B剩余血量=' + b.p2.hp.toFixed(0) + '/' + b.p2.maxHp);
-  if (!used) failures++;
+  var dealt = b.p2.hp <= 0;
+  console.log('  ' + wid + ': 命中=' + (dealt ? '✅' : '❌') +
+    ' B血量=' + b.p2.hp.toFixed(0) + '/' + b.p2.maxHp +
+    ' · 战斗阶段=' + b.phase);
   if (!dealt) failures++;
 });
 

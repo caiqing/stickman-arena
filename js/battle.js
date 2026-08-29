@@ -39,6 +39,9 @@
     this.floorY = FLOOR; this.minX = 40; this.maxX = W - 40;
     this.particles = []; this.dmgNums = []; this.projectiles = []; this.afterimages = [];
     this.slashes = [];   // 剑气/刀气弧光特效
+    // 灵宠
+    this.petP1 = opts.p1.pet ? new SG.PetEntity(opts.p1.pet, this.p1, 1) : null;
+    this.petP2 = opts.p2.pet ? new SG.PetEntity(opts.p2.pet, this.p2, -1) : null;
     this.shakeT = 0; this.shakeAmp = 0;
     this.hitstop = 0; this.slowmo = 0; this.flash = 0;
     this.banner_ = null;
@@ -137,6 +140,14 @@
       this.updateProjectiles(sdt);
       this.updateFx(sdt);
       this.updateAmbient(sdt);
+      // 灵宠更新
+      try {
+        if (this.petP1) this.petP1.update(sdt, this.p2, this.petP2, this);
+        if (this.petP2) this.petP2.update(sdt, this.p1, this.petP1, this);
+      } catch (e) {}
+      // 灵宠替主人挡投射物
+      if (this.petP1 && this.petP1.hp > 0 && this.petP1.hurtT <= 0) this.interceptPet(this.petP1, this.p1);
+      if (this.petP2 && this.petP2.hp > 0 && this.petP2.hurtT <= 0) this.interceptPet(this.petP2, this.p2);
 
       // 大招演示模式：木桩回位回血、主角循环放招
       if (this.demoLoop) {
@@ -337,6 +348,22 @@
       }
     },
 
+    // 灵宠替主人挡投射物
+    interceptPet: function (pet, owner) {
+      for (var i = this.projectiles.length - 1; i >= 0; i--) {
+        var p = this.projectiles[i];
+        if (p.noHit || p.owner === owner) continue;
+        var dx = p.x - pet.x, dy = p.y - (pet.y - 40);
+        if (dx * dx + dy * dy < 45 * 45) {
+          pet.hp -= p.dmg;
+          pet.hurtT = 0.4;
+          this.projectiles.splice(i, 1);
+          this.spawnHitSparks(pet.x, pet.y - 30, 6, false, '#fff');
+          break;
+        }
+      }
+    },
+
     // ---------- 特效 ----------
     fx: function (type, f) {
       switch (type) {
@@ -483,6 +510,11 @@
       this.drawProjectiles(ctx);
       this.drawSlashes(ctx);
       this.drawParticles(ctx);
+      // 灵宠
+      try {
+        if (this.petP1 && this.petP1.hp > 0) this.petP1.draw(ctx);
+        if (this.petP2 && this.petP2.hp > 0) this.petP2.draw(ctx);
+      } catch (e) {}
       this.drawDamageNums(ctx);
       ctx.restore();
       this.drawHUD(ctx);

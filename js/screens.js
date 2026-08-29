@@ -262,6 +262,31 @@
           function () { return custom.gear; }, function (v) { custom.gear = v; }, tickPreview)
       ];
       rows.forEach(function (r) { opts.appendChild(r); });
+      // 灵宠选择
+      var petRow = el('div', 'opt-row');
+      petRow.appendChild(el('div', 'opt-label', '灵宠'));
+      var petWrap = el('div', 'color-dots');
+      var petIcons = { tiger: '🐯', fox: '🦊', eagle: '🦅', goose: '🦢', cat: '🐱', bear: '🐻' };
+      var petOpts = [{ id: '', name: '不带' }].concat(SG.PETS.map(function (p) { return { id: p.id, name: p.name }; }));
+      var petBtns = [];
+      petOpts.forEach(function (p) {
+        var d = el('div', 'color-dot');
+        d.style.cssText = 'width:42px;height:42px;font-size:22px;display:flex;align-items:center;justify-content:center;';
+        d.textContent = p.id === '' ? '🚫' : (petIcons[p.id] || '?');
+        d.title = p.name;
+        if ((custom.pet || '') === p.id) d.classList.add('sel');
+        d.addEventListener('click', function () {
+          custom.pet = p.id;
+          petBtns.forEach(function (x) { x.classList.remove('sel'); });
+          d.classList.add('sel');
+          SG.Audio.sfx('click');
+        });
+        petBtns.push(d);
+        petWrap.appendChild(d);
+      });
+      petRow.appendChild(petWrap);
+      opts.appendChild(petRow);
+
       var winfo = el('div', 'tiny');
       function refreshWinfo() {
         var w = SG.DATA.weaponById(custom.weapon);

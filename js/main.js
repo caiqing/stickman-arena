@@ -325,7 +325,7 @@
     });
     var battle = new SG.Battle({
       mode: 'training', stage: 'dojo', roundsToWin: 9999, roundTime: 9999,
-      p1: { name: game.profile.name, custom: cloneCustom(game.profile.storyCustom), ctrl: 'human' },
+      p1: { name: game.profile.name, custom: cloneCustom(game.profile.storyCustom), pet: game.profile.storyCustom.pet, ctrl: 'human' },
       p2: { name: '陪练 · 木桩人', custom: dummy, hp: 99999,
             ctrl: skillId === 'parry' ? 'dummyai' : 'dummy' },
       onEvent: function (type) {
@@ -476,7 +476,7 @@
       launchBattle({
         mode: 'story', stage: lv.stage, roundsToWin: 1, roundTime: 70,
         storyLevel: lv,
-        p1: { name: game.profile.name, custom: heroCustom, ctrl: 'human' },
+        p1: { name: game.profile.name, custom: heroCustom, pet: heroCustom.pet, ctrl: 'human' },
         p2: { name: lv.boss.name, custom: cloneCustom(lv.boss.custom), hp: lv.boss.hp, isBoss: true, ctrl: Object.assign({}, lv.boss.ai) },
         onEnd: function (battle, result) { storyEnd(lv, result); }
       });
@@ -560,9 +560,9 @@
     launchBattle({
       mode: 'versus', stage: stage,
       roundsToWin: 2, roundTime: 60,
-      p1: { name: v.p1.name, custom: cloneCustom(v.p1.custom),
+      p1: { name: v.p1.name, custom: cloneCustom(v.p1.custom), pet: v.p1.custom.pet,
             ctrl: v.p1auto ? cloneCustom(game.aiByDifficulty[v.difficulty]) : 'human' },
-      p2: { name: v.p2.name, custom: cloneCustom(v.p2.custom),
+      p2: { name: v.p2.name, custom: cloneCustom(v.p2.custom), pet: v.p2.custom.pet,
             ctrl: v.p2cpu ? cloneCustom(game.aiByDifficulty[v.difficulty]) : 'human' },
       onEnd: function (battle, result) { versusEnd(result, battle); }
     });
@@ -680,8 +680,8 @@
       SG.DATA.STAGES[Math.floor(Math.random() * SG.DATA.STAGES.length)].id;
     launchBattle({
       mode: 'tournament', stage: stage, roundsToWin: 2, roundTime: 60,
-      p1: { name: a.name, custom: cloneCustom(a.custom), ctrl: 'human' },
-      p2: { name: b.name, custom: cloneCustom(b.custom), ctrl: b.cpu ? cloneCustom(game.aiByDifficulty[1]) : 'human' },
+      p1: { name: a.name, custom: cloneCustom(a.custom), pet: a.custom.pet, ctrl: 'human' },
+      p2: { name: b.name, custom: cloneCustom(b.custom), pet: b.custom.pet, ctrl: b.cpu ? cloneCustom(game.aiByDifficulty[1]) : 'human' },
       onEnd: function (battle, result) { tournamentMatchEnd(m, result); }
     });
   };

@@ -44,6 +44,12 @@
     punchB: function () { // 连招段2：后手直拳
       return P(0.22, 5, [0.85, 2.1], [1.5, 0.08], [0.35, -0.28], [-0.38, -0.3], 0);
     },
+    aim: function () { // 远程武器瞄准：双臂前伸持械
+      return P(0.12, 2, [1.32, 0.06], [1.18, 0.1], [0.32, -0.2], [-0.32, -0.26], 0);
+    },
+    aimFire: function () { // 射击后坐
+      return P(0.02, 2, [1.38, 0.08], [1.24, 0.14], [0.32, -0.2], [-0.32, -0.26], -0.06);
+    },
     upper: function () { // 连招段3终结：上勾拳
       return P(-0.12, 12, [2.35, 0.55], [0.5, 1.9], [0.42, -0.7], [-0.36, -0.55], -0.25);
     },
@@ -494,6 +500,137 @@
         ctx.quadraticCurveTo(38, 8 + sw * 6, 36, 18 + sw * 8); ctx.stroke();
         ctx.save(); ctx.translate(36, 18 + sw * 8); ctx.rotate(0.9 + sw);
         ctx.fillStyle = '#5a4030'; ctx.fillRect(0, -3, 28, 6); ctx.restore();
+        break;
+      }
+      // ===== 传统武器扩充 =====
+      case 'dagger': {  // 短匕：短刃反握
+        ctx.fillStyle = '#c8d2dc';
+        ctx.beginPath(); ctx.moveTo(-2, -3); ctx.lineTo(28, -1); ctx.lineTo(-2, 4); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#5a4632'; ctx.fillRect(-9, -4, 7, 7);
+        break;
+      }
+      case 'emei': {    // 峨眉刺：拳刺
+        ctx.fillStyle = '#d8e2ec';
+        ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(12, -4); ctx.lineTo(0, 1); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0, 1); ctx.lineTo(12, 5); ctx.lineTo(0, 10); ctx.closePath(); ctx.fill();
+        break;
+      }
+      case 'twinblade': { // 双刀
+        ctx.fillStyle = '#c8d8e8';
+        ctx.beginPath(); ctx.moveTo(2, -5); ctx.lineTo(36, -2); ctx.lineTo(2, 1); ctx.closePath(); ctx.fill();
+        ctx.save(); ctx.scale(1, -1);
+        ctx.fillStyle = '#a8b8cc';
+        ctx.beginPath(); ctx.moveTo(2, -5); ctx.lineTo(32, -2); ctx.lineTo(2, 1); ctx.closePath(); ctx.fill();
+        ctx.restore();
+        break;
+      }
+      case 'katana': {  // 武士刀：弧形长刃
+        ctx.fillStyle = '#e8eef4';
+        ctx.beginPath(); ctx.moveTo(0, -3);
+        ctx.quadraticCurveTo(42, -9, 74, -2);
+        ctx.quadraticCurveTo(42, 0, 0, 3);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#2a2a34'; ctx.fillRect(-13, -3.5, 13, 7);
+        ctx.fillStyle = '#c8a850'; ctx.fillRect(0, -5.5, 4, 11);
+        break;
+      }
+      case 'longstaff': { // 长棍
+        ctx.strokeStyle = '#8a6a42'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(-52, 2); ctx.lineTo(54, -2); ctx.stroke();
+        break;
+      }
+      case 'sanjie': {  // 三节棍
+        ctx.strokeStyle = '#7a5a3a'; ctx.lineWidth = 5.5; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(-32, 0); ctx.lineTo(-6, -4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-6, -4); ctx.lineTo(20, 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(20, 2); ctx.lineTo(46, -6); ctx.stroke();
+        break;
+      }
+      case 'guandao': { // 青龙偃月刀
+        ctx.strokeStyle = '#6a4a2a'; ctx.lineWidth = 5.5;
+        ctx.beginPath(); ctx.moveTo(-62, 0); ctx.lineTo(20, 0); ctx.stroke();
+        ctx.fillStyle = '#c8d2dc';
+        ctx.beginPath();
+        ctx.moveTo(20, -4);
+        ctx.quadraticCurveTo(60, -28, 70, 6);
+        ctx.quadraticCurveTo(50, -6, 20, 6);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#d04040'; ctx.fillRect(17, -9, 5, 17);
+        break;
+      }
+      case 'halberd': { // 方天画戟
+        ctx.strokeStyle = '#6a4a2a'; ctx.lineWidth = 5.5;
+        ctx.beginPath(); ctx.moveTo(-58, 0); ctx.lineTo(30, 0); ctx.stroke();
+        ctx.fillStyle = '#c8d2dc';
+        ctx.beginPath(); ctx.moveTo(30, -4); ctx.lineTo(60, -2); ctx.lineTo(54, 5); ctx.lineTo(30, 5); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(36, 0); ctx.quadraticCurveTo(52, -20, 62, -15); ctx.quadraticCurveTo(54, -4, 36, 0); ctx.closePath(); ctx.fill();
+        break;
+      }
+      case 'changba': { // 丈八长矛
+        ctx.strokeStyle = '#7a5a3a'; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(-72, 0); ctx.lineTo(56, -1); ctx.stroke();
+        ctx.fillStyle = '#cdd6e0';
+        ctx.beginPath(); ctx.moveTo(56, -5); ctx.lineTo(86, -1); ctx.lineTo(56, 4); ctx.closePath(); ctx.fill();
+        break;
+      }
+      case 'mjolnir': { // 雷神之锤
+        ctx.strokeStyle = '#6a5a3a'; ctx.lineWidth = 5.5;
+        ctx.beginPath(); ctx.moveTo(-16, 2); ctx.lineTo(26, -2); ctx.stroke();
+        ctx.fillStyle = '#8a9bb5'; ctx.fillRect(24, -16, 26, 26);
+        ctx.fillStyle = '#b8c8e0'; ctx.fillRect(24, -16, 26, 7);
+        ctx.strokeStyle = '#9ad6ff'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(32, -20); ctx.lineTo(38, -27); ctx.lineTo(32, -24); ctx.stroke();
+        break;
+      }
+      case 'twinhammer': { // 双锤
+        ctx.strokeStyle = '#6a5a3a'; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(-14, 4); ctx.lineTo(20, -2); ctx.stroke();
+        ctx.fillStyle = '#8a9bb5'; ctx.fillRect(18, -14, 18, 18);
+        ctx.strokeStyle = '#6a5a3a';
+        ctx.beginPath(); ctx.moveTo(-14, 6); ctx.lineTo(-34, 14); ctx.stroke();
+        ctx.fillStyle = '#8a9bb5'; ctx.fillRect(-48, 8, 18, 16);
+        break;
+      }
+      // ===== 现代武器 =====
+      case 'bow': {     // 长弓
+        ctx.strokeStyle = '#a8793f'; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(8, -4, 34, -1.25, 1.25); ctx.stroke();
+        ctx.strokeStyle = '#e8e8e8'; ctx.lineWidth = 1.5;
+        var bax = 8 + Math.cos(-1.25) * 34, bay = -4 + Math.sin(-1.25) * 34;
+        var bbx = 8 + Math.cos(1.25) * 34, bby = -4 + Math.sin(1.25) * 34;
+        ctx.beginPath(); ctx.moveTo(bax, bay); ctx.lineTo(bbx, bby); ctx.stroke();
+        break;
+      }
+      case 'pistol': {  // 手枪
+        ctx.fillStyle = '#3a3f4a';
+        ctx.fillRect(-4, -6, 26, 8);
+        ctx.fillRect(0, 2, 7, 12);
+        ctx.fillStyle = '#22262e'; ctx.fillRect(22, -5, 8, 5);
+        break;
+      }
+      case 'smg': {     // 冲锋枪
+        ctx.fillStyle = '#2e3340';
+        ctx.fillRect(-8, -7, 40, 9);
+        ctx.fillRect(6, 2, 7, 13);
+        ctx.fillRect(-14, -5, 8, 6);
+        ctx.fillStyle = '#22262e'; ctx.fillRect(30, -5, 8, 6);
+        break;
+      }
+      case 'sniper': {  // 狙击枪
+        ctx.fillStyle = '#37412e';
+        ctx.fillRect(-16, -5, 64, 7);
+        ctx.fillStyle = '#22262e';
+        ctx.fillRect(48, -4, 16, 4);
+        ctx.fillStyle = '#141821'; ctx.fillRect(6, -12, 18, 6);
+        ctx.fillRect(-18, -3, 10, 8);
+        break;
+      }
+      case 'gatling': { // 加特林
+        ctx.fillStyle = '#3a3f4a';
+        ctx.beginPath(); ctx.arc(8, -2, 13, 0, 7); ctx.fill();
+        ctx.fillStyle = '#22262e';
+        for (var gi = 0; gi < 3; gi++) ctx.fillRect(18, -10 + gi * 7, 44, 4);
+        ctx.fillStyle = '#4a5468'; ctx.fillRect(-14, -6, 22, 10);
         break;
       }
     }

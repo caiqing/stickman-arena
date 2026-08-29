@@ -101,9 +101,135 @@
       moves: [
         { name: '玉带缠腰', desc: '双截棍腰间快打，密不透风', anim: 'punch', dur: 1.5 },
         { name: '拨草寻蛇', desc: '低扫接上挑，防不胜防', anim: 'kick', dur: 1.5 },
-        { name: '影连击', desc: '终极奥义：瞬身影袭，七步之内最快', anim: 'ult-rush', dur: 2.2 }
+        { name: '影连击', desc: '终极奥义：瞬身影袭，七步之内最快', anim: 'ult-rush', dur: 2.0 }
       ],
-      locked: 5 }
+      locked: 5 },
+    // ===== 传统武器扩充 =====
+    { id: 'dagger', name: '影刃短匕', dmg: 0.8, spd: 1.45, range: 0.72,
+      desc: '短小狠辣，出手带毒', ult: { name: '影杀·连刺', type: 'rush', dmg: 33 },
+      moves: [
+        { name: '毒蛇吐信', desc: '贴身短刺，快准狠', anim: 'thrust', dur: 1.3 },
+        { name: '反手划割', desc: '反手横割，专破正面防御', anim: 'slash', dur: 1.3 },
+        { name: '影杀·连刺', desc: '终极奥义：瞬身连刺，招招要害', anim: 'ult-rush', dur: 2.0 }
+      ],
+      locked: 0 },
+    { id: 'emei', name: '峨眉刺', dmg: 0.85, spd: 1.4, range: 0.75,
+      desc: '双刺藏袖，近身无解', ult: { name: '峨眉分刺', type: 'rush', dmg: 32 },
+      moves: [
+        { name: '白蛇吐信', desc: '双刺交替点穴', anim: 'punch', dur: 1.3 },
+        { name: '玉女穿梭', desc: '身法飘忽，刺中带闪', anim: 'kick', dur: 1.3 },
+        { name: '峨眉分刺', desc: '终极奥义：瞬身双刺齐出', anim: 'ult-rush', dur: 2.0 }
+      ],
+      locked: 0 },
+    { id: 'twinblade', name: '鸳鸯双刀', dmg: 1.05, spd: 1.2, range: 0.95,
+      desc: '双刀合璧，攻守兼备', ult: { name: '双刀风暴', type: 'rush', dmg: 34 },
+      moves: [
+        { name: '鸳鸯交错', desc: '双刀交叉连剪', anim: 'slash', dur: 1.4 },
+        { name: '雪花盖顶', desc: '双刀上撩封喉', anim: 'punch', dur: 1.4 },
+        { name: '双刀风暴', desc: '终极奥义：瞬身双刀乱舞', anim: 'ult-rush', dur: 2.0 }
+      ],
+      locked: 0 },
+    { id: 'katana', name: '武士刀', dmg: 1.25, spd: 1.05, range: 1.2,
+      desc: '一刀两断，居合无双', ult: { name: '居合·一闪', type: 'dash', dmg: 34 },
+      moves: [
+        { name: '霞斩', desc: '弧线斜劈，快而致命', anim: 'slash', dur: 1.5 },
+        { name: '逆风刺', desc: '反手直刺破空', anim: 'thrust', dur: 1.5 },
+        { name: '居合·一闪', desc: '终极奥义：拔刀瞬斩，快过闪光', anim: 'ult-dash', dur: 2.2 }
+      ],
+      locked: 0 },
+    { id: 'longstaff', name: '齐眉长棍', dmg: 1.0, spd: 1.0, range: 1.35,
+      desc: '一寸长一寸强，棍扫一大片', ult: { name: '疯魔棍法', type: 'spin', dmg: 35 },
+      moves: [
+        { name: '拨草寻蛇', desc: '棍扫下盘，掀翻对手', anim: 'sweep', dur: 1.5 },
+        { name: '棍打枯木', desc: '长棍直点面门', anim: 'thrust', dur: 1.5 },
+        { name: '疯魔棍法', desc: '终极奥义：棍影如山，密不透风', anim: 'ult-spin', dur: 2.2 }
+      ],
+      locked: 0 },
+    { id: 'sanjie', name: '三节棍', dmg: 1.0, spd: 1.1, range: 1.25,
+      desc: '软硬兼施，变化莫测', ult: { name: '盘龙三节', type: 'spin', dmg: 34 },
+      moves: [
+        { name: '白蛇缠身', desc: '三节甩击，缠腰锁喉', anim: 'sweep', dur: 1.4 },
+        { name: '枯藤盘树', desc: '节节甩打，防不胜防', anim: 'punch', dur: 1.4 },
+        { name: '盘龙三节', desc: '终极奥义：三节旋舞，风雪不透', anim: 'ult-spin', dur: 2.2 }
+      ],
+      locked: 0 },
+    { id: 'guandao', name: '青龙偃月刀', dmg: 1.5, spd: 0.65, range: 1.45,
+      desc: '武圣之刃，一刀断山河', ult: { name: '青龙摆尾', type: 'spin', dmg: 38 },
+      moves: [
+        { name: '拖刀计', desc: '佯退实进，回身猛劈', anim: 'slam', dur: 1.7 },
+        { name: '刀劈华山', desc: '力劈千钧，势不可挡', anim: 'sweep', dur: 1.7 },
+        { name: '青龙摆尾', desc: '终极奥义：刀气旋扫，山河变色', anim: 'ult-spin', dur: 2.4 }
+      ],
+      locked: 0 },
+    { id: 'halberd', name: '方天画戟', dmg: 1.4, spd: 0.7, range: 1.5,
+      desc: '戟尖钩魂，人中吕布', ult: { name: '画戟钩魂', type: 'quake', dmg: 38 },
+      moves: [
+        { name: '戟刺苍穹', desc: '长戟直刺，一击破甲', anim: 'thrust', dur: 1.6 },
+        { name: '横戟扫军', desc: '画戟横扫，千军辟易', anim: 'sweep', dur: 1.6 },
+        { name: '画戟钩魂', desc: '终极奥义：戟震大地，钩魂夺魄', anim: 'ult-quake', dur: 2.4 }
+      ],
+      locked: 0 },
+    { id: 'changba', name: '丈八长矛', dmg: 1.2, spd: 0.8, range: 1.6,
+      desc: '矛及丈八，先发制人', ult: { name: '回马枪', type: 'dash', dmg: 33 },
+      moves: [
+        { name: '长虹贯日', desc: '超远距直刺，先手压制', anim: 'thrust', dur: 1.5 },
+        { name: '横矛立马', desc: '长矛横扫，封锁走位', anim: 'sweep', dur: 1.5 },
+        { name: '回马枪', desc: '终极奥义：佯败回身，一枪夺魂', anim: 'ult-dash', dur: 2.2 }
+      ],
+      locked: 0 },
+    { id: 'mjolnir', name: '雷神之锤', dmg: 1.6, spd: 0.6, range: 1.1,
+      desc: '雷霆之怒，凡人莫当', ult: { name: '雷霆万钧', type: 'lightning', dmg: 40 },
+      moves: [
+        { name: '雷霆重击', desc: '神锤砸落，雷光四溅', anim: 'slam', dur: 1.8 },
+        { name: '风暴横扫', desc: '神力横扫，携雷挟电', anim: 'sweep', dur: 1.8 },
+        { name: '雷霆万钧', desc: '终极奥义：引九天之雷，轰击对手', anim: 'ult-lightning', dur: 2.4 }
+      ],
+      locked: 0 },
+    { id: 'twinhammer', name: '混元双锤', dmg: 1.3, spd: 0.75, range: 0.95,
+      desc: '双锤合击，铿锵震耳', ult: { name: '双锤旋风', type: 'quake', dmg: 35 },
+      moves: [
+        { name: '双锤合璧', desc: '双锤对砸，震耳欲聋', anim: 'slam', dur: 1.5 },
+        { name: '流星双锤', desc: '双锤流星赶月', anim: 'punch', dur: 1.5 },
+        { name: '双锤旋风', desc: '终极奥义：双锤旋地，地裂山崩', anim: 'ult-quake', dur: 2.2 }
+      ],
+      locked: 0 },
+    // ===== 现代武器（乱入武林，趣味十足） =====
+    { id: 'pistol', name: '配枪·掌心雷', dmg: 0.95, spd: 0.95, range: 1.7, ranged: { dmg: 7, projSpd: 1000, kind: 'bullet' },
+      desc: '现代乱入武林，一枪一个脆皮',
+      ult: { name: '致命一击', type: 'gunburst', dmg: 30 },
+      moves: [
+        { name: '快拔枪法', desc: '西部快枪，抬手就射', anim: 'gun', dur: 1.4 },
+        { name: '双点射', desc: '两发点射，弹无虚发', anim: 'gunburst', dur: 1.6 },
+        { name: '致命一击', desc: '终极奥义：三连速射，专打面门', anim: 'gunburst', dur: 1.8 }
+      ],
+      locked: 0 },
+    { id: 'smg', name: '冲锋枪·狂风', dmg: 0.55, spd: 1.5, range: 1.6, ranged: { dmg: 3.5, projSpd: 1100, kind: 'bullet' },
+      desc: '弹雨如风，近战扫射',
+      ult: { name: '扫射狂潮', type: 'spray', dmg: 36 },
+      moves: [
+        { name: '腰际扫射', desc: '腰际平扫，弹壳乱飞', anim: 'gun', dur: 1.3 },
+        { name: '三连点放', desc: '哒哒哒三连发', anim: 'gunburst', dur: 1.4 },
+        { name: '扫射狂潮', desc: '终极奥义：倾泻弹雨，寸草不生', anim: 'spray', dur: 2.2 }
+      ],
+      locked: 0 },
+    { id: 'sniper', name: '狙击枪·鹰眼', dmg: 2.1, spd: 0.38, range: 2.3, ranged: { dmg: 26, projSpd: 1600, kind: 'sniper' },
+      desc: '一击必杀，千里之外',
+      ult: { name: '致命瞄准', type: 'sniper', dmg: 45 },
+      moves: [
+        { name: '屏息瞄准', desc: '稳如磐石，静待时机', anim: 'gun', dur: 1.7 },
+        { name: '穿云狙', desc: '穿云一击，势不可挡', anim: 'gunburst', dur: 1.7 },
+        { name: '致命瞄准', desc: '终极奥义：锁定要害，一击必杀', anim: 'sniper', dur: 2.6 }
+      ],
+      locked: 0 },
+    { id: 'gatling', name: '加特林·弹雨', dmg: 0.4, spd: 2.0, range: 1.7, ranged: { dmg: 2.4, projSpd: 1150, kind: 'bullet' },
+      desc: '倾泻钢铁弹雨，火力即是正义',
+      ult: { name: '弹雨风暴', type: 'spray', dmg: 40 },
+      moves: [
+        { name: '旋转启动', desc: '枪管旋转，弹雨将至', anim: 'gun', dur: 1.2 },
+        { name: '持续压制', desc: '持续火力压制，对手抬不起头', anim: 'spray', dur: 2.0 },
+        { name: '弹雨风暴', desc: '终极奥义：倾泻全部弹药', anim: 'spray', dur: 2.4 }
+      ],
+      locked: 0 }
   ];
 
   // ---------- 装备（被动加成，仅可携带一件） ----------

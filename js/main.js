@@ -1235,7 +1235,7 @@
     // 大招演示的退出按钮
     var demoExit = doc.createElement('button');
     demoExit.id = 'ultdemo-exit';
-    demoExit.textContent = '✕ 退出演示';
+    demoExit.textContent = '退出';
     demoExit.className = 'sysbtn';
     demoExit.style.cssText = 'position:fixed;top:12px;right:12px;width:auto;height:38px;border-radius:20px;font-size:14px;z-index:30;display:none;';
     demoExit.addEventListener('click', function () { game.stopMoveShow(); });

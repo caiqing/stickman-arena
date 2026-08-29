@@ -233,7 +233,23 @@
     }
   ];
 
-  // ---------- 武林大会预设选手（全家总动员） ----------
+  // ---------- 修炼模式：可习得的武学（解锁后实战永久生效） ----------
+  var TRAININGS = [
+    { id: 'chain3', icon: '👊', name: '影三连 · 拳', need: 1,
+      desc: '解锁拳链第三段「上勾拳」——伤害 ×1.45 并击退对手',
+      trainLabel: '收招后 0.4 秒内再按 J，打出第三段「上勾拳」命中陪练' },
+    { id: 'kick3', icon: '🦵', name: '回旋踢 · 腿', need: 1,
+      desc: '解锁腿链第三段「回旋踢」——大击退并前冲追击',
+      trainLabel: '连续按 K 两次，第二段「回旋踢」命中陪练' },
+    { id: 'parry', icon: '🛡', name: '攻防转换 · 弹反', need: 2,
+      desc: '被击中的瞬间按格挡 → 弹反！无伤反弹、对手硬直、蓄力 +20',
+      trainLabel: '陪练出招的瞬间按 S 格挡——成功弹反 2 次' },
+    { id: 'lastStand', icon: '🔥', name: '背水一战', need: 5,
+      desc: '血量低于 35% 时伤害 +25%，绝境爆发',
+      trainLabel: '命中陪练 5 次，激发血性' }
+  ];
+
+  // ---------- 修炼模式：可习得的武学（解锁后实战永久生效） ----------
   var FAMILY_PRESETS = [
     { name: '爸爸', custom: bc('blue', 'short', 'none', 'belt', 'fist') },
     { name: '妈妈', custom: bc('pink', 'twintail', 'none', 'skirt', 'fist') },
@@ -260,7 +276,7 @@
   SG.DATA = {
     COLORS: COLORS, HAIRS: HAIRS, HATS: HATS, CLOTHES: CLOTHES,
     WEAPONS: WEAPONS, GEARS: GEARS, STAGES: STAGES, STORY: STORY,
-    FAMILY_PRESETS: FAMILY_PRESETS,
+    TRAININGS: TRAININGS, FAMILY_PRESETS: FAMILY_PRESETS,
     stageById: function (id) { return firstBy(STAGES, 'id', id) || STAGES[0]; },
     weaponById: function (id) { return firstBy(WEAPONS, 'id', id) || WEAPONS[0]; },
     gearById: function (id) { return firstBy(GEARS, 'id', id) || GEARS[0]; },

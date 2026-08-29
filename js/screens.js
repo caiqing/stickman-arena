@@ -106,7 +106,7 @@
 
     init: function (root) {
       this.root = root;
-      var names = ['title', 'roster', 'picker', 'stageDesigner', 'custom', 'storyMap', 'dialogue', 'versusSetup',
+      var names = ['title', 'roster', 'picker', 'stageDesigner', 'training', 'custom', 'storyMap', 'dialogue', 'versusSetup',
         'tournamentSetup', 'bracket', 'casualHub', 'leaderboard', 'replays', 'share',
         'settings', 'help', 'result', 'pause'];
       var self = this;
@@ -160,6 +160,7 @@
       menu.appendChild(btn('⚔️ 双人对战', function () { g.enterVersus(); }));
       menu.appendChild(btn('🏆 武林大会 · 家庭争霸赛', function () { g.enterTournament(); }));
       menu.appendChild(btn('🎮 休闲中心', function () { g.enterCasual(); }));
+      menu.appendChild(btn('🧘 修炼模式', function () { g.enterTraining(); }));
       menu.appendChild(btn('🎭 人物设定', function () { g.enterRoster(); }));
       menu.appendChild(btn('🎬 录像回放', function () { UI.show('replays'); }));
       menu.appendChild(btn('🏅 评分榜', function () { UI.show('leaderboard'); }));
@@ -741,6 +742,40 @@
           function () { g.startTournamentMatch(); }, 'primary'));
       }
       br.appendChild(btn('返回主菜单', function () { g.quitTournament(); }));
+      panel.appendChild(br);
+      s.appendChild(panel);
+    },
+
+    // ================= 修炼模式 =================
+    refresh_training: function () {
+      var s = this.screens.training;
+      s.className = 'screen solid';
+      s.innerHTML = '';
+      var g = SG.game;
+      var panel = el('div', 'panel');
+      panel.appendChild(el('h2', 'title', '🧘 修炼模式'));
+      panel.appendChild(el('div', 'tiny',
+        '打不赢强敌？回村修炼！在这里开发连招、参悟弹反，学会的武学实战中永久生效。'));
+
+      var list = el('div', 'plist');
+      SG.DATA.TRAININGS.forEach(function (tr) {
+        var learned = g.hasSkill(tr.id);
+        var item = el('div', 'story-node' + (learned ? ' done' : ''));
+        item.appendChild(el('div', 'num', tr.icon));
+        var info = el('div', 'info');
+        info.appendChild(el('div', 'nm', tr.name + (learned ? ' ✅ 已学会' : '')));
+        info.appendChild(el('div', 'desc', tr.desc));
+        item.appendChild(info);
+        item.appendChild(btn(learned ? '🔄 温故' : '开始修炼', function () {
+          g.startTraining(tr.id);
+        }, 'small primary'));
+        list.appendChild(item);
+      });
+      panel.appendChild(list);
+      panel.appendChild(el('div', 'tiny', '修炼在道场进行：按指引完成课题即可学会对应武学，学会后全模式生效。'));
+
+      var br = el('div', 'btn-row');
+      br.appendChild(btn('返回主菜单', function () { UI.show('title'); }));
       panel.appendChild(br);
       s.appendChild(panel);
     },

@@ -62,6 +62,7 @@
 
       var p = this.prev || {};
       var pressed = function (k) { return input[k] && !p[k]; };
+      if (input.down && !p.down) this.blockPressedAt = this.animT;   // 弹反计时
       var grounded = this.onGround;
 
       // ---- 终局状态 ----
@@ -231,8 +232,15 @@
     // ---------- 攻击 ----------
     startAttack: function (kind) {
       var def = ATK[kind];
-      // 连招判定：同类攻击且距上次收招不超过 0.42s → 衔接下一段（最多 3 段）
-      var chain = this.comboKind === kind && (this.animT - this.lastAtkEnd < 0.42) && this.comboStage < 3;
+      // 武学门槛：第三段连招需在修炼模式中习得（道场修炼时临时解禁试用）
+      var g = SG.game;
+      var maxStage = 2;
+      var allowC3 = !g || (g.hasSkill && g.hasSkill('chain3')) || this._allowChain3;
+      var allowK3 = !g || (g.hasSkill && g.hasSkill('kick3')) || this._allowKick3;
+      if (kind === 'light' && allowC3) maxStage = 3;
+      if (kind === 'heavy' && allowK3) maxStage = 3;
+      // 连招判定：同类攻击且距上次收招不超过 0.42s → 衔接下一段
+      var chain = this.comboKind === kind && (this.animT - this.lastAtkEnd < 0.42) && this.comboStage < maxStage;
       this.comboStage = chain ? this.comboStage + 1 : 1;
       this.comboKind = kind;
       var stage = this.comboStage;
@@ -241,10 +249,11 @@
       this.atkT = 0; this.hitDone = false;
       var s = this.spdMult;
       this.atk.timing = { startup: def.startup / s, active: def.active / s, recover: def.recover / s };
-      // 段位加成：段2 伤害×1.15；段3 伤害×1.45、击退×1.9、主动前冲追击
+      // 段位加成：段2 伤害×1.15；段3 伤害×1.45、击退×2.2、主动前冲追击
+      // 连招段1/2 击退减小（锁住对手保持连击距离），终结段大击退打飞
       this.atk.dmgMul = stage >= 3 ? 1.45 : stage === 2 ? 1.15 : 1;
-      this.atk.kbMul = stage >= 3 ? 1.9 : stage === 2 ? 1.2 : 1;
-      this.atk.lunge = (stage === 3 && kind === 'light') ? 1 : (stage >= 2 && kind === 'heavy') ? 1 : 0;
+      this.atk.kbMul = stage >= 3 ? 2.2 : stage === 2 ? 0.25 : 0.5;
+      this.atk.lunge = stage >= 2 ? 1 : 0;
       this.sfxPlayed = false;
     },
 
@@ -255,8 +264,8 @@
 
       if (this.atkT >= tm.startup && this.atkT < tm.startup + tm.active) {
         if (!this.sfxPlayed) { battle.sfx(a.def.sfx); this.sfxPlayed = true; }
-        // 连招段3 主动前冲追击
-        if (a.lunge) this.x += this.facing * 320 * dt;
+        // 连招段2/3 主动前冲追击（锁定连击距离）
+        if (a.lunge) this.x += this.facing * 900 * dt;
         // 命中判定
         if (!this.hitDone) {
           var hb = this.attackHitbox();
@@ -264,8 +273,9 @@
           if (hb.x < hurt.x + hurt.w && hb.x + hb.w > hurt.x &&
               hb.y < hurt.y + hurt.h && hb.y + hb.h > hurt.y) {
             this.hitDone = true;
+            var lsMul = (SG.game && SG.game.hasSkill && SG.game.hasSkill('lastStand') && this.hp < this.maxHp * 0.35) ? 1.25 : 1;
             battle.onHit(this, opp, {
-              dmg: a.def.dmg * this.dmgMult * (a.dmgMul || 1),
+              dmg: a.def.dmg * this.dmgMult * (a.dmgMul || 1) * lsMul,
               kb: a.def.kb * (a.kbMul || 1), hitstun: a.def.hitstun,
               launch: a.def.launch || 0,
               heavy: a.kind === 'heavy', hitSfx: a.def.hitSfx
@@ -301,6 +311,12 @@
       // 面向攻击者才算格挡
       var blocking = this.state === 'block' && this.onGround &&
         Math.sign(info.fromX - this.x) === this.facing;
+      // 弹反（需习得「攻防转换」）：举格挡 0.22 秒内被命中 → 弹反成功
+      if (blocking && SG.game && SG.game.hasSkill && SG.game.hasSkill('parry') &&
+          this.animT - (this.blockPressedAt || -9) < 0.22) {
+        this.blockPressedAt = -9;
+        return 'parried';
+      }
 
       if (blocking) {
         var chip = info.dmg * 0.15;

@@ -166,6 +166,35 @@ console.log('== 测试3c：连招系统 ==');
   if (!ok) failures++;
 })();
 
+// ---- 测试3d：修炼闭环（道场解禁 → 三段连击命中 → 解锁事件） ----
+console.log('== 测试3d：修炼闭环 ==');
+(function () {
+  var fired = null;
+  var b3 = new SG.Battle({
+    mode: 'training', stage: 'dojo', roundsToWin: 9999, roundTime: 9999,
+    p1: { name: 'A', custom: Object.assign(SG.DATA.defaultCustom(), { weapon: 'fist' }), ctrl: 'human' },
+    p2: { name: 'B', custom: Object.assign(SG.DATA.defaultCustom(), { weapon: 'fist' }), hp: 99999, ctrl: 'dummy' },
+    onEvent: function (t) { if (t === 'trainingDone') fired = true; }
+  });
+  b3.training = { skill: 'chain3', got: 0, need: 1, done: false, label: 'test' };
+  var dt = 1 / 60;
+  for (var w = 0; w < 100; w++) b3.update(dt, {});   // 等 intro
+  b3.p1.x = b3.p2.x - 90;                            // 贴身
+  var stages = [];
+  for (var hit = 0; hit < 3; hit++) {
+    // 等 P1 可行动
+    for (var k = 0; k < 90 && !(b3.p1.state === 'idle' || b3.p1.state === 'walk'); k++) b3.update(dt, { p1: {}, p2: {} });
+    b3.update(dt, { p1: { punch: true }, p2: {} });  // 按下一帧
+    b3.update(dt, { p1: {}, p2: {} });
+    stages.push(b3.p1.atk ? b3.p1.atk.stage : 'miss');
+    for (var k2 = 0; k2 < 70 && b3.p1.atk; k2++) b3.update(dt, { p1: {}, p2: {} });
+    b3.p1.x = b3.p2.x - 90;                          // 贴回身位
+  }
+  var ok = stages.join(',') === '1,2,3' && fired === true && b3.training.got >= 1;
+  console.log('  段位: ' + stages.join('→') + ' · trainingDone=' + fired + ' · 进度=' + b3.training.got + (ok ? ' ✅' : ' ❌'));
+  if (!ok) failures++;
+})();
+
 // ---- 测试4：故事模式全部Boss可击败（高攻击AI vs Boss） ----
 console.log('== 测试4：6个故事Boss ==');
 SG.DATA.STORY.forEach(function (lv) {

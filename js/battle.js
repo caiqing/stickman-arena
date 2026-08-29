@@ -93,9 +93,19 @@
       if (this.hitstop > 0) {
         this.hitstop -= dt;
       } else if (active || this.phase === 'ko' || this.phase === 'roundend' || this.phase === 'matchend') {
-        // AI 输入（dummy 木桩不思考）
-        if (this.p1.ctrl !== 'human' && this.p1.ctrl !== 'dummy') i1 = SG.AI.think(this.p1, this.p2, sdt, this.p1.ctrl, this);
-        if (this.p2.ctrl !== 'human' && this.p2.ctrl !== 'dummy') i2 = SG.AI.think(this.p2, this.p1, sdt, this.p2.ctrl, this);
+        // 陪练 AI（修炼模式）：有节奏地出招，供练习弹反/连招
+        if (this.p2.ctrl === 'dummyai') {
+          this.p2.facing = this.p1.x > this.p2.x ? 1 : -1;
+          this.p2._atkCd = (this.p2._atkCd === undefined ? 80 : this.p2._atkCd) - 1;
+          if (this.p2._atkCd <= 0 && this.p2.canAct() && Math.abs(this.p1.x - this.p2.x) < 160) {
+            this.p2.startAttack(Math.random() < 0.6 ? 'light' : 'heavy');
+            this.p2._atkCd = 75 + Math.floor(Math.random() * 45);
+          }
+          i2 = {};
+        } else {
+          if (this.p1.ctrl !== 'human' && this.p1.ctrl !== 'dummy') i1 = SG.AI.think(this.p1, this.p2, sdt, this.p1.ctrl, this);
+          if (this.p2.ctrl !== 'human' && this.p2.ctrl !== 'dummy') i2 = SG.AI.think(this.p2, this.p1, sdt, this.p2.ctrl, this);
+        }
         if (!active) { i1 = {}; i2 = {}; }   // 非战斗阶段锁操作
         this.lastInputs = { p1: i1, p2: i2 };  // 实际生效输入（录像用）
         this.p1.update(sdt, i1, this.p2, this);
@@ -141,6 +151,11 @@
           this.p1.meter = 100;
           this.p1.startUlt(this.p2, this);
         }
+      }
+      // 修炼模式：道场临时解禁对应武学供试用
+      if (this.mode === 'training' && this.training) {
+        if (this.training.skill === 'chain3') this.p1._allowChain3 = true;
+        if (this.training.skill === 'kick3') this.p1._allowKick3 = true;
       }
 
       if (this.shakeT > 0) this.shakeT -= dt;
@@ -229,15 +244,25 @@
     // ---------- 判定 ----------
     onHit: function (attacker, victim, info) {
       var from = attacker.x <= victim.x ? 1 : -1;
+      var stg = attacker.atk ? attacker.atk.stage : 1;
       var res = victim.takeHit({
         dmg: info.dmg, kb: info.kb, hitstun: info.hitstun,
         launch: info.launch, from: from, fromX: attacker.x,
         hitSfx: info.hitSfx
       }, this);
       if (!res) return;
-
       var key = attacker === this.p1 ? 'p1' : 'p2';
-      if (res === 'hit' || res === 'ko') {
+
+      // 弹反成功：攻击者硬直 + 击退，受击者蓄力 +20
+      if (res === 'parried') {
+        attacker.state = 'hurt'; attacker.stateT = 0; attacker.hurtT = 0.75;
+        attacker.vx = -from * 280; attacker.vy = -170; attacker.onGround = false;
+        attacker.comboStage = 0;
+        this.onMeterGain(victim, 20);
+        this.dmgNums.push({ x: victim.x, y: victim.y - 200, val: '弹反!', life: 1 });
+        this.spawnHitSparks(victim.x, victim.y - 100, 12, false, '#9ad6ff');
+        this.hitstop = 0.12;
+      } else if (res === 'hit' || res === 'ko') {
         this.dmgDealt[key] += info.dmg;
         this.combo[key]++;
         this.combo['t' + key.slice(1)] = 1.2;
@@ -257,6 +282,18 @@
       if (res === 'ko') {
         this.hitstop = 0.2;
         this.flash = 0.5;
+      }
+
+      // 修炼模式进度
+      if (this.training && attacker === this.p1) {
+        var tr = this.training;
+        if (tr.skill === 'parry' && res === 'parried') tr.got++;
+        else if ((tr.skill === 'chain3' || tr.skill === 'kick3') && res === 'hit' && stg === 3) tr.got++;
+        else if (tr.skill === 'lastStand' && res === 'hit') tr.got++;
+        if (!tr.done && tr.got >= tr.need) {
+          tr.done = true;
+          this.onEvent('trainingDone', { skill: tr.skill });
+        }
       }
     },
 
@@ -641,6 +678,20 @@
         ctx.fillText(c2 + ' 连击!', W - 60, 180 + Math.sin(this.time * 14) * 3);
       }
       ctx.textAlign = 'left';
+
+      // 修炼模式：道场指引横幅
+      if (this.mode === 'training' && this.training) {
+        ctx.fillStyle = 'rgba(10,12,24,.8)';
+        ctx.fillRect(W / 2 - 270, 96, 540, 62);
+        ctx.strokeStyle = 'rgba(255,217,122,.55)'; ctx.lineWidth = 2;
+        ctx.strokeRect(W / 2 - 270, 96, 540, 62);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffd97a'; ctx.font = 'bold 17px system-ui, sans-serif';
+        ctx.fillText('🧘 ' + this.training.label, W / 2, 122);
+        ctx.fillStyle = '#8fe08f'; ctx.font = 'bold 15px system-ui, sans-serif';
+        ctx.fillText('进度 ' + this.training.got + ' / ' + this.training.need, W / 2, 148);
+        ctx.textAlign = 'left';
+      }
 
       // 大招就绪提示气泡（角色头顶，醒目浮动）
       var self2 = this;

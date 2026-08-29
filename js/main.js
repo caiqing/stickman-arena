@@ -270,6 +270,58 @@
     game.saveProfile();
   }
 
+  // ---------- 修炼模式：技能解锁与道场 ----------
+  game.skills = loadJSON('sga_skills', {});
+  game.hasSkill = function (k) { return !!game.skills[k]; };
+  game.learnSkill = function (k) {
+    game.skills[k] = true;
+    saveJSON('sga_skills', game.skills);
+  };
+  game.enterTraining = function () {
+    game.state = 'menu';
+    SG.Audio.music('menu');
+    SG.UI.show('training');
+  };
+  game.startTraining = function (skillId) {
+    var meta = null;
+    SG.DATA.TRAININGS.forEach(function (x) { if (x.id === skillId) meta = x; });
+    if (!meta) return;
+    var dummy = Object.assign(SG.DATA.defaultCustom(), {
+      color: 'black', hair: 'none', hat: 'none', clothes: 'none', weapon: 'fist', name: '陪练 · 木桩人'
+    });
+    var battle = new SG.Battle({
+      mode: 'training', stage: 'dojo', roundsToWin: 9999, roundTime: 9999,
+      p1: { name: game.profile.name, custom: cloneCustom(game.profile.storyCustom), ctrl: 'human' },
+      p2: { name: '陪练 · 木桩人', custom: dummy, hp: 99999,
+            ctrl: skillId === 'parry' ? 'dummyai' : 'dummy' },
+      onEvent: function (type) {
+        if (type !== 'trainingDone') return;
+        var first = !game.hasSkill(skillId);
+        game.learnSkill(skillId);
+        game.battle = null;
+        game.state = 'menu';
+        SG.Audio.sfx('unlock');
+        SG.Audio.music('menu');
+        SG.UI.showResult({
+          title: '🎓 修炼成功！', titleCls: 'win',
+          sub: meta.name + (first ? ' 已学会，实战中即可使用！' : '（温故知新）'),
+          lines: [[meta.icon + ' ' + meta.name, meta.desc]],
+          buttons: [
+            { label: '🔄 继续修炼', primary: true, cb: function () { game.enterTraining(); } },
+            { label: '返回主菜单', cb: function () { SG.UI.show('title'); } }
+          ]
+        });
+      }
+    });
+    battle.training = { skill: skillId, label: meta.trainLabel, got: 0, need: meta.need, done: false };
+    game.battle = battle;
+    game.battleMeta = null;
+    game.state = 'battle';
+    game.paused = false;
+    hideUI();
+    SG.Audio.music(SG.Audio.musicForStage('dojo'));
+  };
+
   // ---------- 人物花名册：全局角色库，各模式从这里选人 ----------
   game.roster = loadJSON('sga_roster', null);
   if (!game.roster || !game.roster.length) {
@@ -406,6 +458,7 @@
         lines: [['对手剩余血量', Math.round(result.p2.hpLeft / result.p2.maxHp * 100) + '%']],
         buttons: [
           { label: '🔄 再战', primary: true, cb: function () { game.startStoryLevel(lv.id); } },
+          { label: '🧘 回村修炼', cb: function () { game.enterTraining(); } },
           { label: '返回地图', cb: function () { SG.UI.show('storyMap'); } }
         ]
       });
